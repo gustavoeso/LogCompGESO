@@ -8,11 +8,15 @@ def main():
         
         expression = sys.argv[1]
         
-        # Check for invalid characters, including spaces
+        # Check for invalid characters
         if not re.match(r'^[\d+\- ]+$', expression):
             raise ValueError("Invalid expression: contains invalid characters or sequences")
         
-        # Remove spaces for further processing but ensure there are no unhandled spaces
+        # Ensure the expression contains at least one operator
+        if '+' not in expression and '-' not in expression:
+            raise ValueError("Invalid expression: no operators found")
+        
+        # Remove spaces for further processing
         expression = expression.replace(" ", "")
         
         # Tokenize the expression
