@@ -29,7 +29,7 @@ def main():
                 elif current_operator == '-':
                     total -= number
         
-        print(f"The result of the expression '{expression}' is: {total}")
+        print(total)
     
     except ValueError as e:
         print(f"Error: {e}")
