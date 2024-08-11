@@ -6,11 +6,14 @@ def main():
         if len(sys.argv) != 2:
             raise ValueError("Usage: python main.py '<expression>'")
         
-        expression = sys.argv[1].replace(" ", "")
+        expression = sys.argv[1]
         
-        # Check for invalid characters
-        if not re.match(r'^[\d+\-]+$', expression):
+        # Check for invalid characters, including spaces
+        if not re.match(r'^[\d+\- ]+$', expression):
             raise ValueError("Invalid expression: contains invalid characters or sequences")
+        
+        # Remove spaces for further processing but ensure there are no unhandled spaces
+        expression = expression.replace(" ", "")
         
         # Tokenize the expression
         tokens = re.findall(r'\d+|[+-]', expression)
