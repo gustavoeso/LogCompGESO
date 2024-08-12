@@ -8,9 +8,11 @@ class Parser:
         tokenizer.selectNext()
         result = 0
         
-        if tokenizer.next.type == "NUMBER":
-            result = tokenizer.next.value
-            tokenizer.selectNext()
+        if tokenizer.next.type != "NUMBER":
+            raise ValueError('Expression must start with a number')
+        
+        result = tokenizer.next.value
+        tokenizer.selectNext()
         
         while tokenizer.next.type == "OPERATOR":
             operator = tokenizer.next.value
