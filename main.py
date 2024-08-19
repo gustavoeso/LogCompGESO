@@ -9,7 +9,7 @@ def main():
         
         expression = sys.argv[1]
         result = Parser.run(expression)
-        print(result)
+        print(int(result))
     
     except ValueError as e:
         sys.stderr.write(f"Error: {e}\n")
