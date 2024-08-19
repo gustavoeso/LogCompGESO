@@ -7,3 +7,8 @@ Repositório da disciplina de Logica Computacional do Insper
 Diagrama sintático do compilador:
 
 ![v1](imgs/diagrama_v1.png)
+
+Representação EBNF do compilador:
+```ebnf
+expressão = 0-9, {"+" | "-" | "/" | "*"}, 0-9};
+```
