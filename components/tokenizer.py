@@ -22,7 +22,7 @@ class Tokenizer:
                 self.position += 1
             self.next = Token("NUMBER", int(num))
         
-        elif current_char in ['+', '-']:
+        elif current_char in ['+', '-', '*', '/']:
             self.next = Token("OPERATOR", current_char)
             self.position += 1
         
