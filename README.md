@@ -10,5 +10,13 @@ Diagrama sintático do compilador:
 
 Representação EBNF do compilador:
 ```ebnf
-expressão = 0-9, {"+" | "-" | "/" | "*"}, 0-9};
+expression = <term> { ("+" | "-") <term> }
+
+term = <factor> { ("*" | "/") <factor> }
+
+factor = <number>
+
+number = <digit> { <digit> }
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 ```
