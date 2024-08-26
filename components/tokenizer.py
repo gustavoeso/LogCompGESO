@@ -25,6 +25,14 @@ class Tokenizer:
         elif current_char in ['+', '-', '*', '/']:
             self.next = Token("OPERATOR", current_char)
             self.position += 1
+
+        elif current_char == '(':
+            self.next = Token("PARENTHESIS", "(")
+            self.position += 1
+
+        elif current_char == ')':
+            self.next = Token("PARENTHESIS", ")")
+            self.position += 1
         
         else:
             raise ValueError(f"Unexpected character: {current_char}")
