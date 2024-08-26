@@ -6,7 +6,7 @@ class Parser:
         if tokenizer.next.type == "OPERATOR" and tokenizer.next.value in ["+", "-"]:
             unary_operator = tokenizer.next.value
             tokenizer.selectNext()
-            result = Parser.parseFactor(tokenizer)  # Recursão para aplicar o operador unário ao fator
+            result = Parser.parseFactor(tokenizer)
             if unary_operator == "-":
                 return -result
             else:
@@ -19,7 +19,7 @@ class Parser:
             tokenizer.selectNext()
             result = Parser.parseExpression(tokenizer)
             if tokenizer.next.type != "PARENTHESIS" or tokenizer.next.value != ")":
-                raise ValueError("Missing expected parenthesis ')'")
+                raise ValueError("Mismatched parenthesis")
             tokenizer.selectNext()  # Consume the closing parenthesis
             return result
         else:
@@ -31,8 +31,8 @@ class Parser:
         while tokenizer.next.type == "OPERATOR" and tokenizer.next.value in ['*', '/']:
             operator = tokenizer.next.value
             tokenizer.selectNext()
-            if tokenizer.next.type != "NUMBER" and tokenizer.next.type != "PARENTHESIS":
-                raise ValueError("Expected a number or a parenthesis after the operator")
+            if tokenizer.next.type != "NUMBER" and tokenizer.next.type != "PARENTHESIS" and tokenizer.next.type != "OPERATOR":
+                raise ValueError("Expected a number, a parenthesis, or an operator after the operator")
             if operator == "*":
                 result *= Parser.parseFactor(tokenizer)
             elif operator == "/":
@@ -48,8 +48,8 @@ class Parser:
         while tokenizer.next.type == "OPERATOR" and tokenizer.next.value in ['+', '-']:
             operator = tokenizer.next.value
             tokenizer.selectNext()
-            if tokenizer.next.type != "NUMBER" and tokenizer.next.type != "PARENTHESIS":
-                raise ValueError("Expected a number or a parenthesis after the operator")
+            if tokenizer.next.type != "NUMBER" and tokenizer.next.type != "PARENTHESIS" and tokenizer.next.type != "OPERATOR":
+                raise ValueError("Expected a number, a parenthesis, or an operator after the operator")
             if operator == "+":
                 result += Parser.parseTerm(tokenizer)
             elif operator == "-":

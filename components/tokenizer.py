@@ -9,6 +9,10 @@ class Tokenizer:
         self.next = next
 
     def selectNext(self):
+        # Skipping whitespace
+        while self.position < len(self.source) and self.source[self.position].isspace():
+            self.position += 1
+
         if self.position >= len(self.source):
             self.next = Token("EOF", None)
             return
@@ -36,7 +40,3 @@ class Tokenizer:
         
         else:
             raise ValueError(f"Unexpected character: {current_char}")
-        
-        # Skipping whitespace
-        while self.position < len(self.source) and self.source[self.position].isspace():
-            self.position += 1
