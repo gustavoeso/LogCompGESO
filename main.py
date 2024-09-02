@@ -1,14 +1,22 @@
 import sys
-import re
+from components.prepro import PrePro
 from components.parser import Parser
+from components.tokenizer import Tokenizer
 
 def main():
     try:
         if len(sys.argv) != 2:
-            raise ValueError("Usage: python main.py '<expression>'")
+            raise ValueError("Usage: python main.py <filename>.c")
         
-        expression = sys.argv[1]
-        result = Parser.run(expression)
+        with open(sys.argv[1], 'r') as file:
+            source = file.read()
+        
+        source = PrePro.filter(source)
+        tokenizer = Tokenizer(source)
+        tokenizer.selectNext()
+        
+        tree = Parser.parseExpression(tokenizer)
+        result = tree.Evaluate()
         print(int(result))
     
     except ValueError as e:
