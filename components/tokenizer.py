@@ -9,7 +9,6 @@ class Tokenizer:
         self.next = next
 
     def selectNext(self):
-        # Skipping whitespace
         while self.position < len(self.source) and self.source[self.position].isspace():
             self.position += 1
 
@@ -24,19 +23,12 @@ class Tokenizer:
             while self.position < len(self.source) and self.source[self.position].isdigit():
                 num += self.source[self.position]
                 self.position += 1
+
             self.next = Token("NUMBER", int(num))
-        
-        elif current_char in ['+', '-', '*', '/']:
-            self.next = Token("OPERATOR", current_char)
+
+        elif current_char in ['+', '-', '*', '/', '(', ')']:
+            self.next = Token("OPERATOR" if current_char in ['+', '-', '*', '/'] else "PARENTHESIS", current_char)
             self.position += 1
 
-        elif current_char == '(':
-            self.next = Token("PARENTHESIS", "(")
-            self.position += 1
-
-        elif current_char == ')':
-            self.next = Token("PARENTHESIS", ")")
-            self.position += 1
-        
         else:
             raise ValueError(f"Unexpected character: {current_char}")

@@ -1,7 +1,7 @@
-import sys
 from components.prepro import PrePro
 from components.parser import Parser
 from components.tokenizer import Tokenizer
+import sys
 
 def main():
     try:
@@ -12,10 +12,12 @@ def main():
             source = file.read()
         
         source = PrePro.filter(source)
+
         tokenizer = Tokenizer(source)
         tokenizer.selectNext()
         
-        tree = Parser.parseExpression(tokenizer)
+        tree = Parser.run(source)  # Executa o parser e retorna a árvore de sintaxe abstrata
+        
         result = tree.Evaluate()
         print(int(result))
     
