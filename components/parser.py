@@ -1,9 +1,6 @@
 from components.tokenizer import Tokenizer
 from components.nodes import BinOp, UnOp, IntVal, NoOp
 
-from components.tokenizer import Tokenizer
-from components.nodes import BinOp, UnOp, IntVal, NoOp
-
 class Parser:
     @staticmethod
     def parseFactor(tokenizer: Tokenizer):
