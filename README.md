@@ -10,15 +10,25 @@ Diagrama sintático do compilador:
 
 Representação EBNF do compilador:
 ```ebnf
-<expression> ::= <term> { ("+" | "-") <term> };
+BLOCK = "{", { STATEMENT }, "}";
 
-<term> ::= <factor> { ("*" | "/") <factor> };
+STATEMENT = ( λ | ASSIGNMENT | PRINT), ";" ;
 
-<factor> ::= <unary_operator> <factor> | "(" <expression> ")" | <number>;
+ASSIGNMENT = IDENTIFIER, "=", EXPRESSION ;
 
-<unary_operator> ::= "+" | "-";
+PRINT = "printf", "(", EXPRESSION, ")" ;
 
-<number> ::= <digit> { <digit> };
+EXPRESSION = TERM, { ("+" | "-"), TERM } ;
 
-<digit> ::= "-2^63 | ... | 2^63";
+TERM = FACTOR, { ("*" | "/"), FACTOR } ;
+
+FACTOR = (("+" | "-"), FACTOR) | NUMBER | "(", EXPRESSION, ")" | IDENTIFIER ;
+
+IDENTIFIER = LETTER, { LETTER | DIGIT | "_" } ;
+
+NUMBER = DIGIT, { DIGIT } ;
+
+LETTER = ( a | ... | z | A | ... | Z ) ;
+
+DIGIT = ( 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 ) ;
 ```
