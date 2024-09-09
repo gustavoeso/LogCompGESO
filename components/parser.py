@@ -109,6 +109,9 @@ class Parser:
             return Parser.parsePrint(tokenizer)
         elif tokenizer.next.type == "OPEN_BRACE":
             return Parser.parseBlock(tokenizer)
+        elif tokenizer.next.type == "SEMICOLON":  # Ignora múltiplos pontos e vírgulas
+            tokenizer.selectNext()
+            return NoOp()
         else:
             raise ValueError("Unexpected statement")
 

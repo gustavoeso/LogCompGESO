@@ -18,18 +18,19 @@ class Tokenizer:
         
         current_char = self.source[self.position]
 
-        # Verificação para identificar variáveis, palavras reservadas ('int') ou 'printf'
-        if current_char.isalpha():  # Identificadores (variáveis) ou palavras-chave como 'int' e 'printf'
+        # Verificação para identificar variáveis, palavras-chave como 'printf' e agora identificadores com '_'
+        if current_char.isalpha() or current_char == "_":  # Identificadores podem começar com letra ou underscore
             identifier = ""
-            while self.position < len(self.source) and self.source[self.position].isalnum():
+            while self.position < len(self.source) and (self.source[self.position].isalnum() or self.source[self.position] == "_"):
                 identifier += self.source[self.position]
                 self.position += 1
             
-            # Se o identificador for 'int', ignorar (é uma palavra reservada)
-            if identifier == "int":
-                self.selectNext()  # Ignora 'int' e vai para o próximo token
-            elif identifier == "printf":
+            # Se o identificador for 'printf', retornar um token especial
+            if identifier == "printf":
                 self.next = Token("PRINTF", identifier)
+            # Se o identificador for 'int', apenas ignorar, pois é uma palavra-chave
+            elif identifier == "int":
+                self.selectNext()  # Consumir 'int' e passar para o próximo token
             else:
                 self.next = Token("IDENTIFIER", identifier)
 
@@ -41,7 +42,7 @@ class Tokenizer:
                 self.position += 1
             self.next = Token("NUMBER", int(num))
 
-        # Verificação para operadores, parênteses, chaves (blocos de instruções), e agora o operador '='
+        # Verificação para operadores, parênteses, chaves (blocos de instruções), e o operador '='
         elif current_char in ['+', '-', '*', '/', '(', ')', '{', '}', '=']:
             if current_char in ['+', '-', '*', '/']:
                 self.next = Token("OPERATOR", current_char)
