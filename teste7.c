@@ -1,2 +1,6 @@
-/* Teste com operador sem operando */
-3 + * 5 - 2
+{
+    int a = 2;
+    int b = 3;
+    int c = a + b;
+    printf(c * 4);
+}

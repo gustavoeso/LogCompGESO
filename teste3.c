@@ -1,2 +1,6 @@
 /* Teste de expressão complexa com parênteses aninhados */
-((1 + 2) * (3 + 4)) / 2
+{
+    int x = 15;
+    int y = 5;
+    printf(x - y);
+}

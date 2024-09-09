@@ -1,3 +1,5 @@
+/* Teste de expressão complexa com parênteses aninhado
+
 {
     int a = 5;
     int b = 10;

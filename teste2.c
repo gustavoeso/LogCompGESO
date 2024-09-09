@@ -1,2 +1,6 @@
 /* Teste com operadores unários e parênteses */
--3 + (2 * 4) - (6 / 2)
+{
+    int a = 10;
+    int b = 2;
+    printf(a + b * 2);
+}

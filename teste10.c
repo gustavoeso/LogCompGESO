@@ -1,4 +1,4 @@
 {
     int a = 5;
-    printf(a);
+    printf(a + 2;
 }

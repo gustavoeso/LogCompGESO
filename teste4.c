@@ -1,2 +1,5 @@
-/* Teste com operações de várias precedências */
-2 + 3 * 4 - 8 / 2 + (3 + 2)
+{
+    int a = 8;
+    int b = 2;
+    printf(a / b * 4);
+}

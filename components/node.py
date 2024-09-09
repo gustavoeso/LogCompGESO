@@ -6,5 +6,5 @@ class Node(ABC):
         self.children = []
 
     @abstractmethod
-    def Evaluate(self):
+    def Evaluate(self, symbol_table):
         pass
