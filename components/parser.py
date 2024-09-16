@@ -20,10 +20,16 @@ class Parser:
                 raise ValueError("Mismatched parenthesis")
             tokenizer.selectNext()
             return expression
+        elif tokenizer.next.type == "LOGOP" and tokenizer.next.value == "!":
+            tokenizer.selectNext()
+            factor = Parser.parseFactor(tokenizer)
+            return UnOp("!", factor)
         elif tokenizer.next.type == "IDENTIFIER":
             identifier = tokenizer.next.value
             tokenizer.selectNext()
             return IdentifierNode(identifier)
+        elif tokenizer.next.type == "SCANF":
+            return Parser.parseInput(tokenizer)
         else:
             raise ValueError("Expected a number, an operator, or a parenthesis")
 
@@ -137,11 +143,21 @@ class Parser:
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
             raise ValueError("Expected ')' after condition")
         tokenizer.selectNext()
-        if_block = Parser.parseBlock(tokenizer)
+        
+        # Verificar se é um bloco ou uma única instrução
+        if tokenizer.next.type == "SYMBOL" and tokenizer.next.value == "{":
+            if_block = Parser.parseBlock(tokenizer)
+        else:
+            if_block = Parser.parseStatement(tokenizer)
+
         else_block = None
         if tokenizer.next.type == "ELSE":
             tokenizer.selectNext()
-            else_block = Parser.parseBlock(tokenizer)
+            if tokenizer.next.type == "SYMBOL" and tokenizer.next.value == "{":
+                else_block = Parser.parseBlock(tokenizer)
+            else:
+                else_block = Parser.parseStatement(tokenizer)
+
         return IfNode(condition, if_block, else_block)
 
     @staticmethod
@@ -163,17 +179,13 @@ class Parser:
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "(":
             raise ValueError("Expected '(' after 'scanf'")
         tokenizer.selectNext()
-        if tokenizer.next.type != "IDENTIFIER":
-            raise ValueError("Expected identifier after 'scanf('")
-        identifier = tokenizer.next.value
-        tokenizer.selectNext()
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
-            raise ValueError("Expected ')' after identifier")
+            raise ValueError("Expected ')' after 'scanf'")
         tokenizer.selectNext()
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ";":
             raise ValueError("Expected ';' after 'scanf'")
         tokenizer.selectNext()
-        return InputNode(identifier)
+        return InputNode("scanf")  # Identificamos que o scanf retorna um valor
 
     @staticmethod
     def run(code: str):
