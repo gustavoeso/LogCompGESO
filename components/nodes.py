@@ -136,7 +136,7 @@ class InputNode(Node):
         super().__init__(identifier)
 
     def Evaluate(self, symbol_table):
-        # Solicitar entrada do usuário e garantir que o valor retornado seja numérico
-        value = int(input(f"Input value for {self.value}: "))  # Converte a entrada para inteiro
+        # Solicitar entrada sem mensagem extra, apenas o valor
+        value = int(input())  # Silenciosamente aguarda a entrada
         symbol_table.set(self.value, value)
         return value  # Retorna o valor para ser usado em expressões
