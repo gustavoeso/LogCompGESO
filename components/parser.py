@@ -3,24 +3,16 @@ from components.nodes import BinOp, UnOp, IntVal, NoOp, AssignmentNode, BlockNod
 
 class Parser:
     @staticmethod
-    @staticmethod
     def parseFactor(tokenizer: Tokenizer):
-        if tokenizer.next.type == "LOGOP" and tokenizer.next.value == "!":
-            tokenizer.selectNext()
-            factor = Parser.parseFactor(tokenizer)
-            return UnOp("!", factor)  # Adicionar suporte para negação lógica
-
-        elif tokenizer.next.type == "SYMBOL" and tokenizer.next.value in ["+", "-"]:
+        if tokenizer.next.type == "SYMBOL" and tokenizer.next.value in ["+", "-"]:
             operator = tokenizer.next.value
             tokenizer.selectNext()
             factor = Parser.parseFactor(tokenizer)
             return UnOp(operator, factor)
-
         elif tokenizer.next.type == "NUMBER":
             value = tokenizer.next.value
             tokenizer.selectNext()
             return IntVal(value)
-
         elif tokenizer.next.type == "SYMBOL" and tokenizer.next.value == "(":
             tokenizer.selectNext()
             expression = Parser.parseBooleanExpression(tokenizer)
@@ -28,12 +20,10 @@ class Parser:
                 raise ValueError("Mismatched parenthesis")
             tokenizer.selectNext()
             return expression
-
         elif tokenizer.next.type == "IDENTIFIER":
             identifier = tokenizer.next.value
             tokenizer.selectNext()
             return IdentifierNode(identifier)
-
         else:
             raise ValueError("Expected a number, an operator, or a parenthesis")
 
@@ -61,7 +51,6 @@ class Parser:
     def parseAssignment(tokenizer: Tokenizer):
         identifier = tokenizer.next.value
         tokenizer.selectNext()  # Consumir o identificador
-        # Tratar apenas o operador '=' como uma atribuição
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "=":
             raise ValueError("Expected '=' after identifier")
         tokenizer.selectNext()  # Consumir o '='
