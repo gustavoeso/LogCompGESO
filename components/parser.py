@@ -1,36 +1,46 @@
 from components.tokenizer import Tokenizer
-from components.nodes import BinOp, UnOp, IntVal, NoOp, AssignmentNode, BlockNode, PrintNode, IdentifierNode
+from components.nodes import BinOp, UnOp, IntVal, NoOp, AssignmentNode, BlockNode, PrintNode, IdentifierNode, BoolOp, RelOp, IfNode, WhileNode, InputNode
 
 class Parser:
     @staticmethod
+    @staticmethod
     def parseFactor(tokenizer: Tokenizer):
-        if tokenizer.next.type == "OPERATOR" and tokenizer.next.value in ["+", "-"]:
+        if tokenizer.next.type == "LOGOP" and tokenizer.next.value == "!":
+            tokenizer.selectNext()
+            factor = Parser.parseFactor(tokenizer)
+            return UnOp("!", factor)  # Adicionar suporte para negação lógica
+
+        elif tokenizer.next.type == "SYMBOL" and tokenizer.next.value in ["+", "-"]:
             operator = tokenizer.next.value
             tokenizer.selectNext()
             factor = Parser.parseFactor(tokenizer)
             return UnOp(operator, factor)
+
         elif tokenizer.next.type == "NUMBER":
             value = tokenizer.next.value
             tokenizer.selectNext()
             return IntVal(value)
-        elif tokenizer.next.type == "PARENTHESIS" and tokenizer.next.value == "(":
+
+        elif tokenizer.next.type == "SYMBOL" and tokenizer.next.value == "(":
             tokenizer.selectNext()
-            expression = Parser.parseExpression(tokenizer)
-            if tokenizer.next.type != "PARENTHESIS" or tokenizer.next.value != ")":
-                raise ValueError("Mismatched parenthesis: expected `)` but found something else")
+            expression = Parser.parseBooleanExpression(tokenizer)
+            if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
+                raise ValueError("Mismatched parenthesis")
             tokenizer.selectNext()
             return expression
-        elif tokenizer.next.type == "IDENTIFIER":  # Verifica se é um identificador (variável)
+
+        elif tokenizer.next.type == "IDENTIFIER":
             identifier = tokenizer.next.value
             tokenizer.selectNext()
             return IdentifierNode(identifier)
+
         else:
             raise ValueError("Expected a number, an operator, or a parenthesis")
 
     @staticmethod
     def parseTerm(tokenizer: Tokenizer):
         left = Parser.parseFactor(tokenizer)
-        while tokenizer.next.type == "OPERATOR" and tokenizer.next.value in ['*', '/']:
+        while tokenizer.next.type == "SYMBOL" and tokenizer.next.value in ['*', '/']:
             operator = tokenizer.next.value
             tokenizer.selectNext()
             right = Parser.parseFactor(tokenizer)
@@ -40,7 +50,7 @@ class Parser:
     @staticmethod
     def parseExpression(tokenizer: Tokenizer):
         left = Parser.parseTerm(tokenizer)
-        while tokenizer.next.type == "OPERATOR" and tokenizer.next.value in ['+', '-']:
+        while tokenizer.next.type == "SYMBOL" and tokenizer.next.value in ['+', '-']:
             operator = tokenizer.next.value
             tokenizer.selectNext()
             right = Parser.parseTerm(tokenizer)
@@ -51,11 +61,12 @@ class Parser:
     def parseAssignment(tokenizer: Tokenizer):
         identifier = tokenizer.next.value
         tokenizer.selectNext()  # Consumir o identificador
-        if tokenizer.next.type != "OPERATOR" or tokenizer.next.value != "=":
+        # Tratar apenas o operador '=' como uma atribuição
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "=":
             raise ValueError("Expected '=' after identifier")
         tokenizer.selectNext()  # Consumir o '='
         expression = Parser.parseExpression(tokenizer)
-        if tokenizer.next.type != "SEMICOLON":
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ";":
             raise ValueError("Expected ';' after assignment")
         tokenizer.selectNext()  # Consumir ';'
         return AssignmentNode(identifier, expression)
@@ -63,9 +74,9 @@ class Parser:
     @staticmethod
     def parseBlock(tokenizer: Tokenizer):
         instructions = []
-        if tokenizer.next.type == "OPEN_BRACE":
+        if tokenizer.next.type == "SYMBOL" and tokenizer.next.value == "{":
             tokenizer.selectNext()  # Consumir '{'
-            while tokenizer.next.type != "CLOSE_BRACE":
+            while tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "}":
                 instructions.append(Parser.parseStatement(tokenizer))
             tokenizer.selectNext()  # Consumir '}'
         else:
@@ -75,14 +86,14 @@ class Parser:
     @staticmethod
     def parsePrint(tokenizer: Tokenizer):
         tokenizer.selectNext()  # Consumir 'printf'
-        if tokenizer.next.type != "PARENTHESIS" or tokenizer.next.value != '(':
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != '(':
             raise ValueError("Expected '(' after 'printf'")
         tokenizer.selectNext()  # Consumir '('
         expression = Parser.parseExpression(tokenizer)
-        if tokenizer.next.type != "PARENTHESIS" or tokenizer.next.value != ')':
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ')':
             raise ValueError("Expected ')' after expression")
         tokenizer.selectNext()  # Consumir ')'
-        if tokenizer.next.type != "SEMICOLON":
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ";":
             raise ValueError("Expected ';' after 'printf'")
         tokenizer.selectNext()  # Consumir ';'
         return PrintNode(expression)
@@ -90,36 +101,96 @@ class Parser:
     @staticmethod
     def parseStatement(tokenizer: Tokenizer):
         if tokenizer.next.type == "IDENTIFIER":
-            identifier = tokenizer.next.value
-            tokenizer.selectNext()
-
-            # Verifica se é uma atribuição ou apenas uma expressão
-            if tokenizer.next.type == "OPERATOR" and tokenizer.next.value == "=":
-                tokenizer.selectNext()  # Consumir o '='
-                expression = Parser.parseExpression(tokenizer)
-                if tokenizer.next.type != "SEMICOLON":
-                    raise ValueError("Expected ';' after assignment")
-                tokenizer.selectNext()  # Consumir ';'
-                return AssignmentNode(identifier, expression)
-            else:
-                # Se não for uma atribuição, deve ser uma expressão envolvendo o identificador
-                return IdentifierNode(identifier)
-
+            return Parser.parseAssignment(tokenizer)
         elif tokenizer.next.type == "PRINTF":
             return Parser.parsePrint(tokenizer)
-        elif tokenizer.next.type == "OPEN_BRACE":
+        elif tokenizer.next.type == "SCANF":
+            return Parser.parseInput(tokenizer)
+        elif tokenizer.next.type == "IF":
+            return Parser.parseIf(tokenizer)
+        elif tokenizer.next.type == "WHILE":
+            return Parser.parseWhile(tokenizer)
+        elif tokenizer.next.type == "SYMBOL" and tokenizer.next.value == "{":
             return Parser.parseBlock(tokenizer)
-        elif tokenizer.next.type == "SEMICOLON":  # Ignora múltiplos pontos e vírgulas
+        elif tokenizer.next.type == "SYMBOL" and tokenizer.next.value == ";":  # Ignora múltiplos ';'
             tokenizer.selectNext()
             return NoOp()
         else:
             raise ValueError("Unexpected statement")
 
     @staticmethod
+    def parseBooleanExpression(tokenizer: Tokenizer):
+        left = Parser.parseRelationalExpression(tokenizer)
+        while tokenizer.next.type == "LOGOP" and tokenizer.next.value in ["&&", "||"]:
+            operator = tokenizer.next.value
+            tokenizer.selectNext()
+            right = Parser.parseRelationalExpression(tokenizer)
+            left = BoolOp(left, operator, right)
+        return left
+
+    @staticmethod
+    def parseRelationalExpression(tokenizer: Tokenizer):
+        left = Parser.parseExpression(tokenizer)
+        if tokenizer.next.type == "RELOP":
+            operator = tokenizer.next.value
+            tokenizer.selectNext()
+            right = Parser.parseExpression(tokenizer)
+            return RelOp(left, operator, right)
+        return left
+
+    @staticmethod
+    def parseIf(tokenizer: Tokenizer):
+        tokenizer.selectNext()  # Consumir 'if'
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "(":
+            raise ValueError("Expected '(' after 'if'")
+        tokenizer.selectNext()
+        condition = Parser.parseBooleanExpression(tokenizer)
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
+            raise ValueError("Expected ')' after condition")
+        tokenizer.selectNext()
+        if_block = Parser.parseBlock(tokenizer)
+        else_block = None
+        if tokenizer.next.type == "ELSE":
+            tokenizer.selectNext()
+            else_block = Parser.parseBlock(tokenizer)
+        return IfNode(condition, if_block, else_block)
+
+    @staticmethod
+    def parseWhile(tokenizer: Tokenizer):
+        tokenizer.selectNext()  # Consumir 'while'
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "(":
+            raise ValueError("Expected '(' after 'while'")
+        tokenizer.selectNext()
+        condition = Parser.parseBooleanExpression(tokenizer)
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
+            raise ValueError("Expected ')' after condition")
+        tokenizer.selectNext()
+        block = Parser.parseBlock(tokenizer)
+        return WhileNode(condition, block)
+
+    @staticmethod
+    def parseInput(tokenizer: Tokenizer):
+        tokenizer.selectNext()  # Consumir 'scanf'
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != "(":
+            raise ValueError("Expected '(' after 'scanf'")
+        tokenizer.selectNext()
+        if tokenizer.next.type != "IDENTIFIER":
+            raise ValueError("Expected identifier after 'scanf('")
+        identifier = tokenizer.next.value
+        tokenizer.selectNext()
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
+            raise ValueError("Expected ')' after identifier")
+        tokenizer.selectNext()
+        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ";":
+            raise ValueError("Expected ';' after 'scanf'")
+        tokenizer.selectNext()
+        return InputNode(identifier)
+
+    @staticmethod
     def run(code: str):
         tokenizer = Tokenizer(code)
         tokenizer.selectNext()
-        tree = Parser.parseStatement(tokenizer)
+        tree = Parser.parseBlock(tokenizer)
         if tokenizer.next.type != "EOF":
             raise ValueError(f"Unexpected characters at the end of the expression: {tokenizer.next.value}")
         return tree

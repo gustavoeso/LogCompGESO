@@ -1,6 +1,9 @@
-/* Teste com operadores unários e parênteses */
 {
-    int a = 10;
-    int b = 2;
-    printf(a + b * 2);
+    x = 5;
+    y = 5;
+    if (x == y) {
+        printf(1);
+    } else {
+        printf(0);
+    }
 }

@@ -1,4 +1,9 @@
 {
-    int a = 5;
-    printf(a);
+    x = 5;
+    y = 3;
+    if (x > y) {
+        printf(1);
+    } else {
+        printf(0);
+    }
 }

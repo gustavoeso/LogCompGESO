@@ -1,10 +1,9 @@
 {
-    {
-        int a = 5;
-        int b = 10;
-        printf(a + b);
+    scanf(x);
+    if (x != 3) {
+        printf(1);
     }
-    int a = 5;
-    int b = 10;
-    printf((a + b) * 2);
+    else {
+        printf(0);
+    }
 }

@@ -1,6 +1,7 @@
 {
-    int a = 2;
-    int b = 3;
-    int c = a + b;
-    printf(c * 4);
+    x = 5;
+    while (x > 0 && x < 6) {
+        printf(x);
+        x = x - 1;
+    }
 }
