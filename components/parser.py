@@ -182,7 +182,7 @@ class Parser:
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
             raise ValueError("Expected ')' after 'scanf'")
         tokenizer.selectNext()
-        return InputNode("scanf")  # Retorna o valor da função 'scanf' como uma expressão
+        return InputNode("scanf")  # Retorna o valor da função 'scanf'
 
     @staticmethod
     def run(code: str):
