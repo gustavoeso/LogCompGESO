@@ -28,7 +28,7 @@ class Parser:
             identifier = tokenizer.next.value
             tokenizer.selectNext()
             return IdentifierNode(identifier)
-        elif tokenizer.next.type == "SCANF":
+        elif tokenizer.next.type == "SCANF":  # Tratar 'scanf()' como parte de expressões
             return Parser.parseInput(tokenizer)
         else:
             raise ValueError("Expected a number, an operator, or a parenthesis")
@@ -182,10 +182,7 @@ class Parser:
         if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ")":
             raise ValueError("Expected ')' after 'scanf'")
         tokenizer.selectNext()
-        if tokenizer.next.type != "SYMBOL" or tokenizer.next.value != ";":
-            raise ValueError("Expected ';' after 'scanf'")
-        tokenizer.selectNext()
-        return InputNode("scanf")  # Identificamos que o scanf retorna um valor
+        return InputNode("scanf")  # Retorna o valor da função 'scanf' como uma expressão
 
     @staticmethod
     def run(code: str):
