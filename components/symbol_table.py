@@ -6,7 +6,7 @@ class SymbolTable:
         if identifier in self.table:
             return self.table[identifier]
         else:
-            raise ValueError(f"Identifier '{identifier}' not found.")
+            raise ValueError(f"Identificador '{identifier}' não encontrado.")
 
     def set(self, identifier, value):
         self.table[identifier] = value

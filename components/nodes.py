@@ -1,142 +1,139 @@
-from components.node import Node
+from abc import ABC, abstractmethod
+
+class Node(ABC):
+    @abstractmethod
+    def Evaluate(self, symbol_table):
+        pass
 
 class BinOp(Node):
     def __init__(self, left, operator, right):
-        super().__init__(operator)
-        self.children = [left, right]
+        self.left = left
+        self.operator = operator
+        self.right = right
 
     def Evaluate(self, symbol_table):
-        if self.value == '+':
-            return self.children[0].Evaluate(symbol_table) + self.children[1].Evaluate(symbol_table)
-        elif self.value == '-':
-            return self.children[0].Evaluate(symbol_table) - self.children[1].Evaluate(symbol_table)
-        elif self.value == '*':
-            return self.children[0].Evaluate(symbol_table) * self.children[1].Evaluate(symbol_table)
-        elif self.value == '/':
-            return self.children[0].Evaluate(symbol_table) // self.children[1].Evaluate(symbol_table)
+        left_val = self.left.Evaluate(symbol_table)
+        right_val = self.right.Evaluate(symbol_table)
+        if self.operator == 'PLUS':
+            return left_val + right_val
+        elif self.operator == 'MINUS':
+            return left_val - right_val
+        elif self.operator == 'MULT':
+            return left_val * right_val
+        elif self.operator == 'DIV':
+            return left_val // right_val
 
 class UnOp(Node):
     def __init__(self, operator, child):
-        super().__init__(operator)
-        self.children = [child]
+        self.operator = operator
+        self.child = child
 
     def Evaluate(self, symbol_table):
-        if self.value == '+':
-            return +self.children[0].Evaluate(symbol_table)
-        elif self.value == '-':
-            return -self.children[0].Evaluate(symbol_table)
-        elif self.value == '!':  # Adicionar suporte para negação lógica
-            return not self.children[0].Evaluate(symbol_table)
-
+        val = self.child.Evaluate(symbol_table)
+        if self.operator == 'PLUS':
+            return +val
+        elif self.operator == 'MINUS':
+            return -val
+        elif self.operator == 'NOT':
+            return int(not val)
 
 class IntVal(Node):
     def __init__(self, value):
-        super().__init__(value)
+        self.value = value
 
     def Evaluate(self, symbol_table):
         return self.value
 
 class NoOp(Node):
-    def __init__(self):
-        super().__init__()
-
     def Evaluate(self, symbol_table):
-        return None
+        pass
 
 class IdentifierNode(Node):
     def __init__(self, name):
-        super().__init__(name)
         self.name = name
 
     def Evaluate(self, symbol_table):
-        return symbol_table.get(self.name)  # Usando self.name
+        return symbol_table.get(self.name)
 
 class AssignmentNode(Node):
     def __init__(self, identifier, expression):
-        super().__init__(identifier)
-        self.children = [expression]
-        self.name = identifier
+        self.identifier = identifier
+        self.expression = expression
 
     def Evaluate(self, symbol_table):
-        value = self.children[0].Evaluate(symbol_table)
-        symbol_table.set(self.name, value)  # Usando self.name
+        value = self.expression.Evaluate(symbol_table)
+        symbol_table.set(self.identifier.name, value)
 
 class BlockNode(Node):
-    def __init__(self, instructions):
-        super().__init__()
-        self.children = instructions
+    def __init__(self, statements):
+        self.statements = statements
 
     def Evaluate(self, symbol_table):
-        for instruction in self.children:
-            instruction.Evaluate(symbol_table)
+        for statement in self.statements:
+            statement.Evaluate(symbol_table)
 
 class PrintNode(Node):
     def __init__(self, expression):
-        super().__init__()
-        self.children = [expression]
+        self.expression = expression
 
     def Evaluate(self, symbol_table):
-        value = self.children[0].Evaluate(symbol_table)
+        value = self.expression.Evaluate(symbol_table)
         print(value)
 
 class RelOp(Node):
     def __init__(self, left, operator, right):
-        super().__init__(operator)
-        self.children = [left, right]
+        self.left = left
+        self.operator = operator
+        self.right = right
 
     def Evaluate(self, symbol_table):
-        left_val = self.children[0].Evaluate(symbol_table)
-        right_val = self.children[1].Evaluate(symbol_table)
-        if self.value == "==":
-            return left_val == right_val
-        elif self.value == ">":
-            return left_val > right_val
-        elif self.value == "<":
-            return left_val < right_val
-        elif self.value == "!=":
-            return left_val != right_val
+        left_val = self.left.Evaluate(symbol_table)
+        right_val = self.right.Evaluate(symbol_table)
+        if self.operator == '==':
+            return int(left_val == right_val)
+        elif self.operator == '>':
+            return int(left_val > right_val)
+        elif self.operator == '<':
+            return int(left_val < right_val)
+        elif self.operator == '!=':
+            return int(left_val != right_val)
 
 class BoolOp(Node):
     def __init__(self, left, operator, right):
-        super().__init__(operator)
-        self.children = [left, right]
+        self.left = left
+        self.operator = operator
+        self.right = right
 
     def Evaluate(self, symbol_table):
-        left_val = self.children[0].Evaluate(symbol_table)
-        right_val = self.children[1].Evaluate(symbol_table)
-        if self.value == "&&":
-            return left_val and right_val
-        elif self.value == "||":
-            return left_val or right_val
+        left_val = self.left.Evaluate(symbol_table)
+        right_val = self.right.Evaluate(symbol_table)
+        if self.operator == '&&':
+            return int(left_val and right_val)
+        elif self.operator == '||':
+            return int(left_val or right_val)
 
 class IfNode(Node):
     def __init__(self, condition, if_block, else_block=None):
-        super().__init__()
-        self.children = [condition, if_block]
-        if else_block:
-            self.children.append(else_block)
+        self.condition = condition
+        self.if_block = if_block
+        self.else_block = else_block
 
     def Evaluate(self, symbol_table):
-        if self.children[0].Evaluate(symbol_table):
-            self.children[1].Evaluate(symbol_table)
-        elif len(self.children) == 3:
-            self.children[2].Evaluate(symbol_table)
+        if self.condition.Evaluate(symbol_table):
+            self.if_block.Evaluate(symbol_table)
+        elif self.else_block:
+            self.else_block.Evaluate(symbol_table)
 
 class WhileNode(Node):
     def __init__(self, condition, block):
-        super().__init__()
-        self.children = [condition, block]
+        self.condition = condition
+        self.block = block
 
     def Evaluate(self, symbol_table):
-        while self.children[0].Evaluate(symbol_table):
-            self.children[1].Evaluate(symbol_table)
+        while self.condition.Evaluate(symbol_table):
+            self.block.Evaluate(symbol_table)
 
 class InputNode(Node):
-    def __init__(self, identifier):
-        super().__init__(identifier)
-
     def Evaluate(self, symbol_table):
-        # Solicitar entrada sem mensagem extra, apenas o valor
-        value = int(input())  # Silenciosamente aguarda a entrada
-        symbol_table.set(self.value, value)
-        return value  # Retorna o valor para ser usado em expressões
+        value = int(input())
+        return value

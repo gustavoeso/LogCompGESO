@@ -1,10 +1,10 @@
 from components.my_token import Token
 
 class Tokenizer:
-    def __init__(self, source: str, position: int = 0, next: Token = None):
+    def __init__(self, source: str):
         self.source = source
-        self.position = position
-        self.next = next
+        self.position = 0
+        self.next = None
 
     def selectNext(self):
         # Ignorar espaços em branco
@@ -17,7 +17,7 @@ class Tokenizer:
 
         current_char = self.source[self.position]
 
-        # Identificação de identificadores e palavras-chave
+        # Identificadores e palavras-chave
         if current_char.isalpha() or current_char == "_":
             identifier = ""
             while self.position < len(self.source) and (self.source[self.position].isalnum() or self.source[self.position] == "_"):
@@ -25,55 +25,16 @@ class Tokenizer:
                 self.position += 1
 
             # Verificar palavras-chave
-            if identifier == "if":
-                self.next = Token("IF", identifier)
-            elif identifier == "else":
-                self.next = Token("ELSE", identifier)
-            elif identifier == "while":
-                self.next = Token("WHILE", identifier)
-            elif identifier == "scanf":
-                self.next = Token("SCANF", identifier)
-            elif identifier == "printf":
-                self.next = Token("PRINTF", identifier)
-            else:
-                self.next = Token("IDENTIFIER", identifier)
+            keywords = {
+                "if": "IF",
+                "else": "ELSE",
+                "while": "WHILE",
+                "scanf": "SCANF",
+                "printf": "PRINTF"
+            }
 
-        # Operadores relacionais e atribuição
-        elif current_char == '=':
-            if self.position + 1 < len(self.source) and self.source[self.position + 1] == '=':
-                self.next = Token("RELOP", "==")  # Operador relacional de igualdade
-                self.position += 2
-            else:
-                self.next = Token("SYMBOL", "=")  # Operador de atribuição
-                self.position += 1
-
-        # Operadores booleanos e relacionais
-        elif current_char in ['>', '<']:
-            self.next = Token("RELOP", current_char)
-            self.position += 1
-
-        # Operadores lógicos: &&, ||, e !
-        elif current_char == '&':
-            if self.position + 1 < len(self.source) and self.source[self.position + 1] == '&':
-                self.next = Token("LOGOP", "&&")  # Operador lógico AND
-                self.position += 2
-            else:
-                raise ValueError(f"Unexpected character: {current_char}")
-        
-        elif current_char == '|':
-            if self.position + 1 < len(self.source) and self.source[self.position + 1] == '|':
-                self.next = Token("LOGOP", "||")  # Operador lógico OR
-                self.position += 2
-            else:
-                raise ValueError(f"Unexpected character: {current_char}")
-
-        elif current_char == '!':
-            if self.position + 1 < len(self.source) and self.source[self.position + 1] == '=':
-                self.next = Token("RELOP", "!=")  # Diferente
-                self.position += 2
-            else:
-                self.next = Token("LOGOP", "!")  # Operador lógico NOT
-                self.position += 1
+            token_type = keywords.get(identifier, "IDENTIFIER")
+            self.next = Token(token_type, identifier)
 
         # Números
         elif current_char.isdigit():
@@ -83,10 +44,21 @@ class Tokenizer:
                 self.position += 1
             self.next = Token("NUMBER", int(num))
 
-        # Operadores matemáticos, parênteses, e chaves
-        elif current_char in ['+', '-', '*', '/', '(', ')', '{', '}', ';']:
-            self.next = Token("SYMBOL", current_char)
-            self.position += 1
-
+        # Operadores e símbolos
         else:
-            raise ValueError(f"Unexpected character: {current_char}")
+            two_char_operators = {"==": "RELOP", "!=": "RELOP", "&&": "LOGOP", "||": "LOGOP"}
+            one_char_operators = {'=': "ASSIGN", '>': "RELOP", '<': "RELOP", '+': "PLUS", '-': "MINUS", '*': "MULT", '/': "DIV", '(': "LPAREN", ')': "RPAREN", '{': "LBRACE", '}': "RBRACE", ';': "SEMICOLON", '!': "NOT"}
+
+            if self.position + 1 < len(self.source):
+                two_char = self.source[self.position:self.position+2]
+                if two_char in two_char_operators:
+                    self.next = Token(two_char_operators[two_char], two_char)
+                    self.position += 2
+                    return
+
+            if current_char in one_char_operators:
+                token_type = one_char_operators[current_char]
+                self.next = Token(token_type, current_char)
+                self.position += 1
+            else:
+                raise ValueError(f"Caractere inesperado: '{current_char}' na posição {self.position}")
