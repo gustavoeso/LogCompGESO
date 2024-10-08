@@ -131,16 +131,8 @@ class AssignmentNode(Node):
         var_type = var_info['type']
 
         if expr_type != var_type:
-            if var_type == 'int' and expr_type == 'str':
-                # Tentar converter a string para int
-                try:
-                    value = int(value)
-                except ValueError:
-                    raise ValueError(f"Não é possível converter 'str' para 'int' em '{self.identifier.name}'")
-            elif var_type == 'str' and expr_type == 'int':
-                value = str(value)
-            else:
-                raise ValueError(f"Tipo incompatível na atribuição para '{self.identifier.name}': esperado '{var_type}', mas obteve '{expr_type}'")
+            # Não permitir atribuição de 'int' para 'str' ou vice-versa
+            raise ValueError(f"Tipo incompatível na atribuição para '{self.identifier.name}': esperado '{var_type}', mas obteve '{expr_type}'")
         symbol_table.set(self.identifier.name, value)
 
 class VarDec(Node):
@@ -207,4 +199,4 @@ class InputNode(Node):
             value = int(user_input)
             return value, 'int'
         except ValueError:
-            return user_input, 'str'
+            raise ValueError(f"Entrada inválida: '{user_input}' não é um número inteiro")
