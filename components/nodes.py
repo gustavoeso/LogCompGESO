@@ -16,22 +16,30 @@ class BinOp(Node):
         right_value, right_type = self.right.Evaluate(symbol_table)
 
         # Operações aritméticas
-        if self.operator in ('PLUS', 'MINUS', 'MULT', 'DIV'):
-            if self.operator == 'PLUS' and ('str' in [left_type, right_type]):
-                # Concatenação de strings
-                return str(left_value) + str(right_value), 'str'
-            elif left_type == 'int' and right_type == 'int':
-                if self.operator == 'PLUS':
-                    return left_value + right_value, 'int'
-                elif self.operator == 'MINUS':
-                    return left_value - right_value, 'int'
-                elif self.operator == 'MULT':
-                    return left_value * right_value, 'int'
-                elif self.operator == 'DIV':
-                    return left_value // right_value, 'int'
+        if self.operator == 'PLUS':
+            if left_type == 'int' and right_type == 'int':
+                return left_value + right_value, 'int'
+            elif left_type == 'str' and right_type == 'str':
+                return left_value + right_value, 'str'
             else:
-                raise ValueError("Operação aritmética inválida entre tipos")
-
+                raise ValueError(f"Operação '+' inválida entre '{left_type}' e '{right_type}'")
+        elif self.operator == 'MINUS':
+            if left_type == 'int' and right_type == 'int':
+                return left_value - right_value, 'int'
+            else:
+                raise ValueError(f"Operação '-' inválida entre '{left_type}' e '{right_type}'")
+        elif self.operator == 'MULT':
+            if left_type == 'int' and right_type == 'int':
+                return left_value * right_value, 'int'
+            else:
+                raise ValueError(f"Operação '*' inválida entre '{left_type}' e '{right_type}'")
+        elif self.operator == 'DIV':
+            if left_type == 'int' and right_type == 'int':
+                if right_value == 0:
+                    raise ValueError("Divisão por zero")
+                return left_value // right_value, 'int'
+            else:
+                raise ValueError(f"Operação '/' inválida entre '{left_type}' e '{right_type}'")
         # Operadores lógicos
         elif self.operator in ('AND', 'OR'):
             if left_type == 'int' and right_type == 'int':
@@ -42,12 +50,11 @@ class BinOp(Node):
                 elif self.operator == 'OR':
                     return int(left_value or right_value), 'int'
             else:
-                raise ValueError("Operação lógica inválida entre tipos")
-
+                raise ValueError(f"Operação lógica '{self.operator}' inválida entre '{left_type}' e '{right_type}'")
         # Operadores relacionais
         elif self.operator in ('==', '!=', '>', '<'):
             if left_type != right_type:
-                raise ValueError("Comparação entre tipos diferentes")
+                raise ValueError(f"Comparação entre tipos diferentes: '{left_type}' e '{right_type}'")
             if self.operator == '==':
                 return int(left_value == right_value), 'int'
             elif self.operator == '!=':
@@ -56,8 +63,10 @@ class BinOp(Node):
                 return int(left_value > right_value), 'int'
             elif self.operator == '<':
                 return int(left_value < right_value), 'int'
+            else:
+                raise ValueError(f"Operador relacional desconhecido '{self.operator}'")
         else:
-            raise ValueError("Operador desconhecido")
+            raise ValueError(f"Operador desconhecido '{self.operator}'")
 
 class UnOp(Node):
     def __init__(self, operator, child):
@@ -82,6 +91,8 @@ class UnOp(Node):
                 return int(not bool(value)), 'int'
             else:
                 raise ValueError("Operação '!' inválida para o tipo")
+        else:
+            raise ValueError(f"Operador unário desconhecido '{self.operator}'")
 
 class IntVal(Node):
     def __init__(self, value):
@@ -118,13 +129,18 @@ class AssignmentNode(Node):
         var_info = symbol_table.get(self.identifier.name)
         value, expr_type = self.expression.Evaluate(symbol_table)
         var_type = var_info['type']
+
         if expr_type != var_type:
             if var_type == 'int' and expr_type == 'str':
-                raise ValueError(f"Não é possível atribuir 'str' a 'int' em '{self.identifier.name}'")
+                # Tentar converter a string para int
+                try:
+                    value = int(value)
+                except ValueError:
+                    raise ValueError(f"Não é possível converter 'str' para 'int' em '{self.identifier.name}'")
             elif var_type == 'str' and expr_type == 'int':
                 value = str(value)
             else:
-                raise ValueError(f"Tipo incompatível na atribuição para '{self.identifier.name}'")
+                raise ValueError(f"Tipo incompatível na atribuição para '{self.identifier.name}': esperado '{var_type}', mas obteve '{expr_type}'")
         symbol_table.set(self.identifier.name, value)
 
 class VarDec(Node):
@@ -139,12 +155,7 @@ class VarDec(Node):
                 value, expr_type = expression.Evaluate(symbol_table)
                 var_type = self.var_type
                 if expr_type != var_type:
-                    if var_type == 'int' and expr_type == 'str':
-                        raise ValueError(f"Não é possível inicializar 'int' com 'str' em '{identifier.name}'")
-                    elif var_type == 'str' and expr_type == 'int':
-                        value = str(value)
-                    else:
-                        raise ValueError(f"Tipo incompatível na inicialização de '{identifier.name}'")
+                    raise ValueError(f"Tipo incompatível na inicialização de '{identifier.name}': esperado '{var_type}', mas obteve '{expr_type}'")
                 symbol_table.set(identifier.name, value)
 
 class BlockNode(Node):
@@ -160,7 +171,7 @@ class PrintNode(Node):
         self.expression = expression
 
     def Evaluate(self, symbol_table):
-        value, var_type = self.expression.Evaluate(symbol_table)
+        value, _ = self.expression.Evaluate(symbol_table)
         print(value)
 
 class IfNode(Node):
@@ -192,7 +203,6 @@ class WhileNode(Node):
 class InputNode(Node):
     def Evaluate(self, symbol_table):
         user_input = input()
-        # Tentar converter para inteiro, se possível
         try:
             value = int(user_input)
             return value, 'int'

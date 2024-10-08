@@ -223,23 +223,19 @@ class Parser:
             Parser.tokens.selectNext()
             return IntVal(value)
         elif Parser.tokens.next.type == "IDENTIFIER":
-            # Verificar se é 'true' ou 'false'
-            if Parser.tokens.next.value == "true":
-                value = 1
-                Parser.tokens.selectNext()
-                return IntVal(value)
-            elif Parser.tokens.next.value == "false":
-                value = 0
-                Parser.tokens.selectNext()
-                return IntVal(value)
-            else:
-                identifier = IdentifierNode(Parser.tokens.next.value)
-                Parser.tokens.selectNext()
-                return identifier
+            identifier = IdentifierNode(Parser.tokens.next.value)
+            Parser.tokens.selectNext()
+            return identifier
         elif Parser.tokens.next.type == "STRING":
             value = Parser.tokens.next.value
             Parser.tokens.selectNext()
             return StringVal(value)
+        elif Parser.tokens.next.type == "TRUE":
+            Parser.tokens.selectNext()
+            return IntVal(1)
+        elif Parser.tokens.next.type == "FALSE":
+            Parser.tokens.selectNext()
+            return IntVal(0)
         elif Parser.tokens.next.type == "LPAREN":
             Parser.tokens.selectNext()
             expression = Parser.parseBooleanExpression()

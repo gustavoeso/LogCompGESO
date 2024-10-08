@@ -1,3 +1,5 @@
+# components/tokenizer.py
+
 from components.my_token import Token
 
 class Tokenizer:
@@ -33,7 +35,9 @@ class Tokenizer:
                 "printf": "PRINTF",
                 "int": "TYPE",
                 "str": "TYPE",
-                "bool": "TYPE"
+                "bool": "TYPE",
+                "true": "TRUE",
+                "false": "FALSE"
             }
 
             token_type = keywords.get(identifier, "IDENTIFIER")
@@ -82,7 +86,7 @@ class Tokenizer:
                 ';': "SEMICOLON",
                 '!': "NOT",
                 ',': "COMMA",
-                '|': "PIPE"  # Adicionando '|' como um possível operador
+                '|': "PIPE"
             }
 
             if self.position + 1 < len(self.source):
