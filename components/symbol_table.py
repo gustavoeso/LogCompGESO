@@ -1,5 +1,3 @@
-# symbol_table.py
-
 class SymbolTable:
     def __init__(self):
         self.table = {}

@@ -64,7 +64,8 @@ class Tokenizer:
             two_char_operators = {
                 "==": "EQOP",
                 "!=": "EQOP",
-                "&&": "AND"
+                "&&": "AND",
+                "||": "OR"
             }
             one_char_operators = {
                 '=': "ASSIGN",
@@ -80,7 +81,8 @@ class Tokenizer:
                 '}': "RBRACE",
                 ';': "SEMICOLON",
                 '!': "NOT",
-                ',': "COMMA"
+                ',': "COMMA",
+                '|': "PIPE"  # Adicionando '|' como um possível operador
             }
 
             if self.position + 1 < len(self.source):
@@ -90,8 +92,12 @@ class Tokenizer:
                     self.position += 2
                     return
 
+            current_char = self.source[self.position]
+
             if current_char in one_char_operators:
                 token_type = one_char_operators[current_char]
+                if token_type == "PIPE":
+                    raise ValueError(f"Operador '{current_char}' inválido na posição {self.position}. Você quis dizer '||'?")
                 self.next = Token(token_type, current_char)
                 self.position += 1
             else:

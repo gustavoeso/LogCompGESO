@@ -1,5 +1,3 @@
-# nodes.py
-
 from abc import ABC, abstractmethod
 
 class Node(ABC):
@@ -35,11 +33,14 @@ class BinOp(Node):
                 raise ValueError("Operação aritmética inválida entre tipos")
 
         # Operadores lógicos
-        elif self.operator == 'AND':
+        elif self.operator in ('AND', 'OR'):
             if left_type == 'int' and right_type == 'int':
                 left_value = int(bool(left_value))
                 right_value = int(bool(right_value))
-                return int(left_value and right_value), 'int'
+                if self.operator == 'AND':
+                    return int(left_value and right_value), 'int'
+                elif self.operator == 'OR':
+                    return int(left_value or right_value), 'int'
             else:
                 raise ValueError("Operação lógica inválida entre tipos")
 
@@ -120,7 +121,7 @@ class AssignmentNode(Node):
         if expr_type != var_type:
             if var_type == 'int' and expr_type == 'str':
                 raise ValueError(f"Não é possível atribuir 'str' a 'int' em '{self.identifier.name}'")
-            elif var_type == 'str':
+            elif var_type == 'str' and expr_type == 'int':
                 value = str(value)
             else:
                 raise ValueError(f"Tipo incompatível na atribuição para '{self.identifier.name}'")
@@ -136,10 +137,11 @@ class VarDec(Node):
             symbol_table.declare(identifier.name, self.var_type)
             if expression:
                 value, expr_type = expression.Evaluate(symbol_table)
-                if expr_type != self.var_type:
-                    if self.var_type == 'int' and expr_type == 'str':
+                var_type = self.var_type
+                if expr_type != var_type:
+                    if var_type == 'int' and expr_type == 'str':
                         raise ValueError(f"Não é possível inicializar 'int' com 'str' em '{identifier.name}'")
-                    elif self.var_type == 'str':
+                    elif var_type == 'str' and expr_type == 'int':
                         value = str(value)
                     else:
                         raise ValueError(f"Tipo incompatível na inicialização de '{identifier.name}'")
@@ -189,5 +191,10 @@ class WhileNode(Node):
 
 class InputNode(Node):
     def Evaluate(self, symbol_table):
-        value = int(input())
-        return value, 'int'
+        user_input = input()
+        # Tentar converter para inteiro, se possível
+        try:
+            value = int(user_input)
+            return value, 'int'
+        except ValueError:
+            return user_input, 'str'

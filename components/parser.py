@@ -142,7 +142,17 @@ class Parser:
 
     @staticmethod
     def parseBooleanExpression():
-        return Parser.parseLogicalAndExpression()
+        return Parser.parseLogicalOrExpression()
+
+    @staticmethod
+    def parseLogicalOrExpression():
+        left = Parser.parseLogicalAndExpression()
+        while Parser.tokens.next.type == "OR":
+            operator = Parser.tokens.next.type
+            Parser.tokens.selectNext()
+            right = Parser.parseLogicalAndExpression()
+            left = BinOp(left, operator, right)
+        return left
 
     @staticmethod
     def parseLogicalAndExpression():
