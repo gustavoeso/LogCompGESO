@@ -21,6 +21,8 @@ class BinOp(Node):
                 return left_value + right_value, 'int'
             elif left_type == 'str' and right_type == 'str':
                 return left_value + right_value, 'str'
+            elif (left_type == 'str' and right_type == 'int') or (left_type == 'int' and right_type == 'str'):
+                return str(left_value) + str(right_value), 'str'
             else:
                 raise ValueError(f"Operação '+' inválida entre '{left_type}' e '{right_type}'")
         elif self.operator == 'MINUS':
