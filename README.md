@@ -6,7 +6,7 @@ Repositório da disciplina de Logica Computacional do Insper
 
 Diagrama sintático do compilador:
 
-![v1](imgs/diagrama_v3.png)
+![v1](imgs/diagrama_v4.png)
 
 Representação EBNF do compilador:
 ```ebnf
