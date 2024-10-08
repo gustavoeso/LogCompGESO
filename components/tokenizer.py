@@ -30,7 +30,10 @@ class Tokenizer:
                 "else": "ELSE",
                 "while": "WHILE",
                 "scanf": "SCANF",
-                "printf": "PRINTF"
+                "printf": "PRINTF",
+                "int": "TYPE",
+                "str": "TYPE",
+                "bool": "TYPE"
             }
 
             token_type = keywords.get(identifier, "IDENTIFIER")
@@ -44,10 +47,41 @@ class Tokenizer:
                 self.position += 1
             self.next = Token("NUMBER", int(num))
 
+        # Literais de string
+        elif current_char == '"':
+            self.position += 1  # Consumir o '"'
+            string_value = ""
+            while self.position < len(self.source) and self.source[self.position] != '"':
+                string_value += self.source[self.position]
+                self.position += 1
+            if self.position >= len(self.source):
+                raise ValueError("String não fechada")
+            self.position += 1  # Consumir o '"'
+            self.next = Token("STRING", string_value)
+
         # Operadores e símbolos
         else:
-            two_char_operators = {"==": "RELOP", "!=": "RELOP", "&&": "LOGOP", "||": "LOGOP"}
-            one_char_operators = {'=': "ASSIGN", '>': "RELOP", '<': "RELOP", '+': "PLUS", '-': "MINUS", '*': "MULT", '/': "DIV", '(': "LPAREN", ')': "RPAREN", '{': "LBRACE", '}': "RBRACE", ';': "SEMICOLON", '!': "NOT"}
+            two_char_operators = {
+                "==": "EQOP",
+                "!=": "EQOP",
+                "&&": "AND"
+            }
+            one_char_operators = {
+                '=': "ASSIGN",
+                '>': "RELOP",
+                '<': "RELOP",
+                '+': "PLUS",
+                '-': "MINUS",
+                '*': "MULT",
+                '/': "DIV",
+                '(': "LPAREN",
+                ')': "RPAREN",
+                '{': "LBRACE",
+                '}': "RBRACE",
+                ';': "SEMICOLON",
+                '!': "NOT",
+                ',': "COMMA"
+            }
 
             if self.position + 1 < len(self.source):
                 two_char = self.source[self.position:self.position+2]

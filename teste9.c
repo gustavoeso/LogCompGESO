@@ -1,9 +1,12 @@
 {
-    scanf(x);
-    scanf(y);
-    if (x > 0 && y < 5) {
-        printf(1);
+    int count = 0;
+    while (count < 5) {
+        printf(count);
+        count = count + 1;
+    }
+    if (count == 5) {
+        printf("Loop completed");
     } else {
-        printf(0);
+        printf("Unexpected count value");
     }
 }

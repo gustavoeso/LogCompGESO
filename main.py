@@ -14,7 +14,7 @@ def main():
         source = PrePro.filter(source)
 
         tree = Parser.run(source)  # Executa o parser e retorna a árvore de sintaxe abstrata
-        
+
         # Cria a tabela de símbolos e avalia a árvore
         symbol_table = SymbolTable()
         tree.Evaluate(symbol_table)

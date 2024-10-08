@@ -1,7 +1,12 @@
 {
-    x = 5;
-    while (x > 0 && x < 6) {
-        printf(x);
-        x = x - 1;
-    }
+    int x = 10;
+    int y = 5;
+    printf(x > y);       /* Deve imprimir 1 */
+    printf(x < y);       /* Deve imprimir 0 */
+    printf(x == y);      /* Deve imprimir 0 */
+    printf(x != y);      /* Deve imprimir 1 */
+    printf("abc" == "abc");  /* Deve imprimir 1 */
+    printf("abc" != "def");  /* Deve imprimir 1 */
+    printf("abc" < "def");   /* Deve imprimir 1 (ordem lexicográfica) */
+    printf("abc" > "def");   /* Deve imprimir 0 */
 }

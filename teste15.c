@@ -1,4 +1,0 @@
-{   
-    x = scanf();
-    printf(x);
-}

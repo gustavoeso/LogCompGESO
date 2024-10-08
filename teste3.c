@@ -1,9 +1,7 @@
 {
-    x = 3;
-    y = 4;
-    if (x > 2 && y < 5) {
-        printf(1);
+    if (true) {
+        printf("Verdadeiro");
     } else {
-        printf(0);
+        printf("Falso");
     }
 }

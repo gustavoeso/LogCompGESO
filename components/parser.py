@@ -1,8 +1,9 @@
 from components.tokenizer import Tokenizer
 from components.nodes import (
     BinOp, UnOp, IntVal, NoOp, AssignmentNode, BlockNode, PrintNode,
-    IdentifierNode, BoolOp, RelOp, IfNode, WhileNode, InputNode
+    IdentifierNode, VarDec, StringVal, IfNode, WhileNode, InputNode
 )
+
 class Parser:
     tokens = None
 
@@ -32,7 +33,9 @@ class Parser:
 
     @staticmethod
     def parseStatement():
-        if Parser.tokens.next.type == "IDENTIFIER":
+        if Parser.tokens.next.type == "TYPE":
+            node = Parser.parseVarDec()
+        elif Parser.tokens.next.type == "IDENTIFIER":
             node = Parser.parseAssignment()
         elif Parser.tokens.next.type == "IF":
             node = Parser.parseIf()
@@ -48,6 +51,36 @@ class Parser:
         else:
             raise ValueError(f"Comando inesperado '{Parser.tokens.next.value}'")
         return node
+
+    @staticmethod
+    def parseVarDec():
+        var_type = Parser.tokens.next.value
+        Parser.tokens.selectNext()
+        declarations = []
+
+        while True:
+            if Parser.tokens.next.type != "IDENTIFIER":
+                raise ValueError("Esperado um identificador na declaração")
+            identifier = IdentifierNode(Parser.tokens.next.value)
+            Parser.tokens.selectNext()
+
+            expression = None
+            if Parser.tokens.next.type == "ASSIGN":
+                Parser.tokens.selectNext()
+                expression = Parser.parseExpression()
+
+            declarations.append((identifier, expression))
+
+            if Parser.tokens.next.type == "COMMA":
+                Parser.tokens.selectNext()
+                continue
+            elif Parser.tokens.next.type == "SEMICOLON":
+                Parser.tokens.selectNext()
+                break
+            else:
+                raise ValueError("Esperado ',' ou ';' na declaração")
+
+        return VarDec(var_type, declarations)
 
     @staticmethod
     def parseAssignment():
@@ -98,7 +131,7 @@ class Parser:
         if Parser.tokens.next.type != "LPAREN":
             raise ValueError("Esperado '(' após 'printf'")
         Parser.tokens.selectNext()
-        expression = Parser.parseExpression()
+        expression = Parser.parseBooleanExpression()
         if Parser.tokens.next.type != "RPAREN":
             raise ValueError("Esperado ')' após a expressão em 'printf'")
         Parser.tokens.selectNext()
@@ -108,35 +141,37 @@ class Parser:
         return PrintNode(expression)
 
     @staticmethod
-    def parseInput():
-        Parser.tokens.selectNext()  # Consumir 'scanf'
-        if Parser.tokens.next.type != "LPAREN":
-            raise ValueError("Esperado '(' após 'scanf'")
-        Parser.tokens.selectNext()  # Consumir '('
-        if Parser.tokens.next.type != "RPAREN":
-            raise ValueError("Esperado ')' em 'scanf'")
-        Parser.tokens.selectNext()  # Consumir ')'
-        return InputNode()
-
+    def parseBooleanExpression():
+        return Parser.parseLogicalAndExpression()
 
     @staticmethod
-    def parseBooleanExpression():
+    def parseLogicalAndExpression():
+        left = Parser.parseEqualityExpression()
+        while Parser.tokens.next.type == "AND":
+            operator = Parser.tokens.next.type
+            Parser.tokens.selectNext()
+            right = Parser.parseEqualityExpression()
+            left = BinOp(left, operator, right)
+        return left
+
+    @staticmethod
+    def parseEqualityExpression():
         left = Parser.parseRelationalExpression()
-        while Parser.tokens.next.type == "LOGOP":
+        while Parser.tokens.next.type == "EQOP":
             operator = Parser.tokens.next.value
             Parser.tokens.selectNext()
             right = Parser.parseRelationalExpression()
-            left = BoolOp(left, operator, right)
+            left = BinOp(left, operator, right)
         return left
 
     @staticmethod
     def parseRelationalExpression():
         left = Parser.parseExpression()
-        if Parser.tokens.next.type == "RELOP":
+        while Parser.tokens.next.type == "RELOP":
             operator = Parser.tokens.next.value
             Parser.tokens.selectNext()
             right = Parser.parseExpression()
-            left = RelOp(left, operator, right)
+            left = BinOp(left, operator, right)
         return left
 
     @staticmethod
@@ -178,9 +213,23 @@ class Parser:
             Parser.tokens.selectNext()
             return IntVal(value)
         elif Parser.tokens.next.type == "IDENTIFIER":
-            identifier = IdentifierNode(Parser.tokens.next.value)
+            # Verificar se é 'true' ou 'false'
+            if Parser.tokens.next.value == "true":
+                value = 1
+                Parser.tokens.selectNext()
+                return IntVal(value)
+            elif Parser.tokens.next.value == "false":
+                value = 0
+                Parser.tokens.selectNext()
+                return IntVal(value)
+            else:
+                identifier = IdentifierNode(Parser.tokens.next.value)
+                Parser.tokens.selectNext()
+                return identifier
+        elif Parser.tokens.next.type == "STRING":
+            value = Parser.tokens.next.value
             Parser.tokens.selectNext()
-            return identifier
+            return StringVal(value)
         elif Parser.tokens.next.type == "LPAREN":
             Parser.tokens.selectNext()
             expression = Parser.parseBooleanExpression()
@@ -192,3 +241,14 @@ class Parser:
             return Parser.parseInput()
         else:
             raise ValueError(f"Fator inesperado '{Parser.tokens.next.value}'")
+
+    @staticmethod
+    def parseInput():
+        Parser.tokens.selectNext()  # Consumir 'scanf'
+        if Parser.tokens.next.type != "LPAREN":
+            raise ValueError("Esperado '(' após 'scanf'")
+        Parser.tokens.selectNext()  # Consumir '('
+        if Parser.tokens.next.type != "RPAREN":
+            raise ValueError("Esperado ')' em 'scanf'")
+        Parser.tokens.selectNext()  # Consumir ')'
+        return InputNode()

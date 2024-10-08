@@ -1,9 +1,5 @@
 {
-    x = 5;
-    y = 3;
-    if (x > y) {
-        printf(1);
-    } else {
-        printf(0);
-    }
+    int x;
+    x = true;
+    printf(x);  /* Deve imprimir 1 */
 }
