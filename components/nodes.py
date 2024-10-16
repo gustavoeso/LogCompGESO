@@ -38,16 +38,59 @@ class BinOp(Node):
         elif self.operator == 'MINUS':
             code += "    SUB EAX, EBX\n"
         elif self.operator == 'MULT':
-            code += "    IMUL EAX, EBX\n"
+            code += "    IMUL EBX\n"
         elif self.operator == 'DIV':
             code += "    CDQ\n"  # Estende EAX para EDX:EAX
             code += "    IDIV EBX\n"
         elif self.operator == '<':
             code += "    CMP EAX, EBX\n"
-            code += f"    CALL binop_jl_{self.id}\n"
+            code += "    CALL binop_jl\n"
         else:
             raise ValueError(f"Operador desconhecido '{self.operator}'")
 
+        return code
+
+class UnOp(Node):
+    def __init__(self, operator, child):
+        self.operator = operator
+        self.child = child
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        code = ""
+        code += self.child.Generate(symbol_table)
+        if self.operator == 'MINUS':
+            code += "    NEG EAX\n"
+        elif self.operator == 'NOT':
+            code += "    CMP EAX, 0\n"
+            code += "    JE unop_true_{0}\n".format(self.id)
+            code += "    MOV EAX, 0\n"
+            code += "    JMP unop_exit_{0}\n".format(self.id)
+            code += "unop_true_{0}:\n".format(self.id)
+            code += "    MOV EAX, 1\n"
+            code += "unop_exit_{0}:\n".format(self.id)
+        else:
+            raise ValueError(f"Operador unário desconhecido '{self.operator}'")
+        return code
+
+class IntVal(Node):
+    def __init__(self, value):
+        self.value = value
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        code = "    MOV EAX, {0}\n".format(self.value)
+        return code
+
+class IdentifierNode(Node):
+    def __init__(self, name):
+        self.name = name
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        var_info = symbol_table.get(self.name)
+        offset = var_info['offset']
+        code = "    MOV EAX, [EBP{0}]\n".format(offset)
         return code
 
 class AssignmentNode(Node):
@@ -64,7 +107,7 @@ class AssignmentNode(Node):
         var_info = symbol_table.get(self.identifier.name)
         offset = var_info['offset']
         code += "    MOV EBX, EAX\n"
-        code += f"    MOV [EBP{offset}], EBX ; {self.identifier.name} = ...\n"
+        code += "    MOV [EBP{0}], EBX ; {1} = ...\n".format(offset, self.identifier.name)
         return code
 
 class VarDec(Node):
@@ -78,13 +121,110 @@ class VarDec(Node):
         for identifier, expression in self.declarations:
             symbol_table.declare(identifier.name, self.var_type)
             # Gera 'PUSH DWORD 0' para reservar espaço na pilha
-            code += f"    PUSH DWORD 0 ; Dim {identifier.name} as Integer [EBP{symbol_table.get(identifier.name)['offset']}]\n"
+            offset = symbol_table.get(identifier.name)['offset']
+            code += "    PUSH DWORD 0 ; Dim {0} as Integer [EBP{1}]\n".format(identifier.name, offset)
             if expression:
                 # Gera o código para avaliar a expressão e armazenar na variável
                 code += expression.Generate(symbol_table)
-                var_info = symbol_table.get(identifier.name)
-                offset = var_info['offset']
-                code += f"    MOV [EBP{offset}], EAX ; Inicializa {identifier.name}\n"
+                code += "    MOV [EBP{0}], EAX ; Inicializa {1}\n".format(offset, identifier.name)
         return code
 
-# As demais classes permanecem iguais
+class BlockNode(Node):
+    def __init__(self, statements):
+        self.statements = statements
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        code = ""
+        for statement in self.statements:
+            code += statement.Generate(symbol_table)
+        return code
+
+class PrintNode(Node):
+    def __init__(self, expression):
+        self.expression = expression
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        code = ""
+        # Gera o código para avaliar a expressão e colocar o resultado em EAX
+        code += self.expression.Generate(symbol_table)
+        # Empilha o argumento para a sub-rotina de impressão
+        code += "    PUSH EAX ; empilha argumento para print\n"
+        # Chama a sub-rotina de impressão
+        code += "    CALL print\n"
+        # Ajusta o ESP após a chamada (limpa o argumento da pilha)
+        code += "    POP EBX ; limpa args\n"
+        return code
+
+class IfNode(Node):
+    def __init__(self, condition, if_block, else_block=None):
+        self.condition = condition
+        self.if_block = if_block
+        self.else_block = else_block
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        code = ""
+        # Gera o código para a condição (resultado em EAX)
+        code += self.condition.Generate(symbol_table)
+        # Compara EAX com zero
+        code += "    CMP EAX, 0\n"
+        if self.else_block:
+            else_label = "ELSE_{0}".format(self.id)
+            end_label = "ENDIF_{0}".format(self.id)
+            # Se EAX == 0, pula para o else
+            code += "    JE {0}\n".format(else_label)
+            # Gera o código para o bloco 'if'
+            code += self.if_block.Generate(symbol_table)
+            # Pula para o final
+            code += "    JMP {0}\n".format(end_label)
+            # Label 'else'
+            code += "{0}:\n".format(else_label)
+            # Gera o código para o bloco 'else'
+            code += self.else_block.Generate(symbol_table)
+            # Label final
+            code += "{0}:\n".format(end_label)
+        else:
+            end_label = "ENDIF_{0}".format(self.id)
+            # Se EAX == 0, pula para o fim
+            code += "    JE {0}\n".format(end_label)
+            # Gera o código para o bloco 'if'
+            code += self.if_block.Generate(symbol_table)
+            # Label final
+            code += "{0}:\n".format(end_label)
+        return code
+
+class WhileNode(Node):
+    def __init__(self, condition, block):
+        self.condition = condition
+        self.block = block
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        code = ""
+        start_label = "LOOP_{0}".format(self.id)
+        end_label = "EXIT_{0}".format(self.id)
+        # Label de início do loop
+        code += "{0}:\n".format(start_label)
+        # Gera o código para a condição (resultado em EAX)
+        code += self.condition.Generate(symbol_table)
+        # Compara EAX com zero
+        code += "    CMP EAX, 0\n"
+        # Se EAX == 0, sai do loop
+        code += "    JE {0}\n".format(end_label)
+        # Gera o código para o bloco do loop
+        code += self.block.Generate(symbol_table)
+        # Volta ao início do loop
+        code += "    JMP {0}\n".format(start_label)
+        # Label de fim do loop
+        code += "{0}:\n".format(end_label)
+        return code
+
+class InputNode(Node):
+    def __init__(self):
+        self.id = Node.newId()
+
+    def Generate(self, symbol_table):
+        # Implementação do scanf não é trivial em assembly e não será suportada aqui
+        raise NotImplementedError("scanf não é suportado nesta implementação")

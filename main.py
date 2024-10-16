@@ -2,13 +2,18 @@ from components.prepro import PrePro
 from components.parser import Parser
 from components.symbol_table import SymbolTable
 import sys
+import os
 
 def main():
     try:
         if len(sys.argv) != 2:
             raise ValueError("Uso: python main.py <arquivo>.c")
         
-        with open(sys.argv[1], 'r') as file:
+        input_file = sys.argv[1]
+        if not os.path.isfile(input_file):
+            raise ValueError(f"Arquivo '{input_file}' não encontrado.")
+
+        with open(input_file, 'r') as file:
             source = file.read()
         
         source = PrePro.filter(source)
@@ -94,11 +99,14 @@ binop_exit:
         code += "    MOV EAX, SYS_EXIT\n"
         code += "    INT 0x80\n"
 
+        # Gera o nome do arquivo assembly com a extensão '.asm'
+        output_file = os.path.splitext(input_file)[0] + '.asm'
+
         # Escreve o código assembly em um arquivo
-        with open('program.asm', 'w') as asm_file:
+        with open(output_file, 'w') as asm_file:
             asm_file.write(code)
         
-        print("Código assembly gerado com sucesso em 'program.asm'.")
+        print(f"Código assembly gerado com sucesso em '{output_file}'.")
 
     except ValueError as e:
         sys.stderr.write(f"Erro: {e}\n")
