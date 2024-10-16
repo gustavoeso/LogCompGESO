@@ -1,5 +1,3 @@
-# components/tokenizer.py
-
 from components.my_token import Token
 
 class Tokenizer:
@@ -9,7 +7,7 @@ class Tokenizer:
         self.next = None
 
     def selectNext(self):
-        # Ignorar espaços em branco
+        # Ignorar espacos em branco
         while self.position < len(self.source) and self.source[self.position].isspace():
             self.position += 1
 
@@ -43,7 +41,7 @@ class Tokenizer:
             token_type = keywords.get(identifier, "IDENTIFIER")
             self.next = Token(token_type, identifier)
 
-        # Números
+        # Numeros
         elif current_char.isdigit():
             num = ""
             while self.position < len(self.source) and self.source[self.position].isdigit():
@@ -59,11 +57,11 @@ class Tokenizer:
                 string_value += self.source[self.position]
                 self.position += 1
             if self.position >= len(self.source):
-                raise ValueError("String não fechada")
+                raise ValueError("String nao fechada")
             self.position += 1  # Consumir o '"'
             self.next = Token("STRING", string_value)
 
-        # Operadores e símbolos
+        # Operadores e simbolos
         else:
             two_char_operators = {
                 "==": "EQOP",
@@ -101,8 +99,8 @@ class Tokenizer:
             if current_char in one_char_operators:
                 token_type = one_char_operators[current_char]
                 if token_type == "PIPE":
-                    raise ValueError(f"Operador '{current_char}' inválido na posição {self.position}. Você quis dizer '||'?")
+                    raise ValueError(f"Operador '{current_char}' invalido na posicao {self.position}. Voce quis dizer '||'?")
                 self.next = Token(token_type, current_char)
                 self.position += 1
             else:
-                raise ValueError(f"Caractere inesperado: '{current_char}' na posição {self.position}")
+                raise ValueError(f"Caractere inesperado: '{current_char}' na posicao {self.position}")

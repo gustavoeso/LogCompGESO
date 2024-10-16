@@ -13,7 +13,7 @@ class Parser:
         Parser.tokens.selectNext()
         tree = Parser.parseProgram()
         if Parser.tokens.next.type != "EOF":
-            raise ValueError(f"Token inesperado '{Parser.tokens.next.value}' após o fim do programa")
+            raise ValueError(f"Token inesperado '{Parser.tokens.next.value}' apos o fim do programa")
         return tree
 
     @staticmethod
@@ -23,7 +23,7 @@ class Parser:
     @staticmethod
     def parseBlock():
         if Parser.tokens.next.type != "LBRACE":
-            raise ValueError("Esperado '{' no início do bloco")
+            raise ValueError("Esperado '{' no inicio do bloco")
         Parser.tokens.selectNext()
         statements = []
         while Parser.tokens.next.type != "RBRACE":
@@ -60,7 +60,7 @@ class Parser:
 
         while True:
             if Parser.tokens.next.type != "IDENTIFIER":
-                raise ValueError("Esperado um identificador na declaração")
+                raise ValueError("Esperado um identificador na declaracao")
             identifier = IdentifierNode(Parser.tokens.next.value)
             Parser.tokens.selectNext()
 
@@ -78,7 +78,7 @@ class Parser:
                 Parser.tokens.selectNext()
                 break
             else:
-                raise ValueError("Esperado ',' ou ';' na declaração")
+                raise ValueError("Esperado ',' ou ';' na declaracao")
 
         return VarDec(var_type, declarations)
 
@@ -87,11 +87,11 @@ class Parser:
         identifier = IdentifierNode(Parser.tokens.next.value)
         Parser.tokens.selectNext()
         if Parser.tokens.next.type != "ASSIGN":
-            raise ValueError("Esperado '=' na atribuição")
+            raise ValueError("Esperado '=' na atribuicao")
         Parser.tokens.selectNext()
         expression = Parser.parseExpression()
         if Parser.tokens.next.type != "SEMICOLON":
-            raise ValueError("Esperado ';' após a atribuição")
+            raise ValueError("Esperado ';' apos a atribuicao")
         Parser.tokens.selectNext()
         return AssignmentNode(identifier, expression)
 
@@ -99,11 +99,11 @@ class Parser:
     def parseIf():
         Parser.tokens.selectNext()
         if Parser.tokens.next.type != "LPAREN":
-            raise ValueError("Esperado '(' após 'if'")
+            raise ValueError("Esperado '(' apos 'if'")
         Parser.tokens.selectNext()
         condition = Parser.parseBooleanExpression()
         if Parser.tokens.next.type != "RPAREN":
-            raise ValueError("Esperado ')' após a condição 'if'")
+            raise ValueError("Esperado ')' apos a condicao 'if'")
         Parser.tokens.selectNext()
         if_block = Parser.parseStatement()
         else_block = None
@@ -116,11 +116,11 @@ class Parser:
     def parseWhile():
         Parser.tokens.selectNext()
         if Parser.tokens.next.type != "LPAREN":
-            raise ValueError("Esperado '(' após 'while'")
+            raise ValueError("Esperado '(' apos 'while'")
         Parser.tokens.selectNext()
         condition = Parser.parseBooleanExpression()
         if Parser.tokens.next.type != "RPAREN":
-            raise ValueError("Esperado ')' após a condição 'while'")
+            raise ValueError("Esperado ')' apos a condicao 'while'")
         Parser.tokens.selectNext()
         block = Parser.parseStatement()
         return WhileNode(condition, block)
@@ -129,14 +129,14 @@ class Parser:
     def parsePrint():
         Parser.tokens.selectNext()
         if Parser.tokens.next.type != "LPAREN":
-            raise ValueError("Esperado '(' após 'printf'")
+            raise ValueError("Esperado '(' apos 'printf'")
         Parser.tokens.selectNext()
         expression = Parser.parseBooleanExpression()
         if Parser.tokens.next.type != "RPAREN":
-            raise ValueError("Esperado ')' após a expressão em 'printf'")
+            raise ValueError("Esperado ')' apos a expressao em 'printf'")
         Parser.tokens.selectNext()
         if Parser.tokens.next.type != "SEMICOLON":
-            raise ValueError("Esperado ';' após 'printf'")
+            raise ValueError("Esperado ';' apos 'printf'")
         Parser.tokens.selectNext()
         return PrintNode(expression)
 
@@ -240,7 +240,7 @@ class Parser:
             Parser.tokens.selectNext()
             expression = Parser.parseBooleanExpression()
             if Parser.tokens.next.type != "RPAREN":
-                raise ValueError("Esperado ')' após a expressão")
+                raise ValueError("Esperado ')' apos a expressao")
             Parser.tokens.selectNext()
             return expression
         elif Parser.tokens.next.type == "SCANF":
@@ -252,7 +252,7 @@ class Parser:
     def parseInput():
         Parser.tokens.selectNext()  # Consumir 'scanf'
         if Parser.tokens.next.type != "LPAREN":
-            raise ValueError("Esperado '(' após 'scanf'")
+            raise ValueError("Esperado '(' apos 'scanf'")
         Parser.tokens.selectNext()  # Consumir '('
         if Parser.tokens.next.type != "RPAREN":
             raise ValueError("Esperado ')' em 'scanf'")

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from components.symbol_table import SymbolTable
 
 class Node(ABC):
-    i = 0  # Atributo estático para IDs únicos
+    i = 0  # Atributo estatico para IDs unicos
 
     @staticmethod
     def newId():
@@ -22,11 +22,11 @@ class BinOp(Node):
 
     def Generate(self, symbol_table):
         code = ""
-        # Gera o código para o operando esquerdo (resultado em EAX)
+        # Gera o codigo para o operando esquerdo (resultado em EAX)
         code += self.left.Generate(symbol_table)
         # Salva EAX na pilha
         code += "    PUSH EAX\n"
-        # Gera o código para o operando direito (resultado em EAX)
+        # Gera o codigo para o operando direito (resultado em EAX)
         code += self.right.Generate(symbol_table)
         # Move o resultado do operando direito para EBX
         code += "    MOV EBX, EAX\n"
@@ -92,7 +92,7 @@ class UnOp(Node):
             code += "    MOV EAX, 1\n"
             code += f"unop_exit_{self.id}:\n"
         else:
-            raise ValueError(f"Operador unário desconhecido '{self.operator}'")
+            raise ValueError(f"Operador unario desconhecido '{self.operator}'")
         return code
 
 class IntVal(Node):
@@ -108,11 +108,11 @@ class StringVal(Node):
     def __init__(self, value):
         self.value = value
         self.id = Node.newId()
-        # Note que lidar com strings em assembly requer manipulação adicional
+        # Note que lidar com strings em assembly requer manipulacao adicional
 
     def Generate(self, symbol_table):
-        # Para simplificar, não implementaremos strings neste exemplo
-        raise NotImplementedError("Strings não são suportadas nesta implementação")
+        # Para simplificar, nao implementaremos strings neste exemplo
+        raise NotImplementedError("Strings nao sao suportadas nesta implementacao")
 
 class NoOp(Node):
     def __init__(self):
@@ -140,9 +140,9 @@ class AssignmentNode(Node):
 
     def Generate(self, symbol_table):
         code = ""
-        # Gera o código para avaliar a expressão e colocar o resultado em EAX
+        # Gera o codigo para avaliar a expressao e colocar o resultado em EAX
         code += self.expression.Generate(symbol_table)
-        # Armazena o valor de EAX na variável
+        # Armazena o valor de EAX na variavel
         var_info = symbol_table.get(self.identifier.name)
         offset = var_info['offset']
         code += f"    MOV [EBP{offset}], EAX\n"
@@ -159,7 +159,7 @@ class VarDec(Node):
         for identifier, expression in self.declarations:
             symbol_table.declare(identifier.name, self.var_type)
             if expression:
-                # Gera o código para avaliar a expressão e armazenar na variável
+                # Gera o codigo para avaliar a expressao e armazenar na variavel
                 code += expression.Generate(symbol_table)
                 var_info = symbol_table.get(identifier.name)
                 offset = var_info['offset']
@@ -184,11 +184,11 @@ class PrintNode(Node):
 
     def Generate(self, symbol_table):
         code = ""
-        # Gera o código para avaliar a expressão e colocar o resultado em EAX
+        # Gera o codigo para avaliar a expressao e colocar o resultado em EAX
         code += self.expression.Generate(symbol_table)
-        # Empilha o argumento para a subrotina de impressão
+        # Empilha o argumento para a subrotina de impressao
         code += "    PUSH EAX\n"
-        # Chama a subrotina de impressão
+        # Chama a subrotina de impressao
         code += "    CALL print\n"
         # Limpa a pilha
         code += "    POP EAX\n"
@@ -203,7 +203,7 @@ class IfNode(Node):
 
     def Generate(self, symbol_table):
         code = ""
-        # Gera o código para a condição (resultado em EAX)
+        # Gera o codigo para a condicao (resultado em EAX)
         code += self.condition.Generate(symbol_table)
         # Compara EAX com zero
         code += "    CMP EAX, 0\n"
@@ -212,13 +212,13 @@ class IfNode(Node):
             end_label = f"ENDIF_{self.id}"
             # Se EAX == 0, pula para o else
             code += f"    JE {else_label}\n"
-            # Gera o código para o bloco 'if'
+            # Gera o codigo para o bloco 'if'
             code += self.if_block.Generate(symbol_table)
             # Pula para o final
             code += f"    JMP {end_label}\n"
             # Label 'else'
             code += f"{else_label}:\n"
-            # Gera o código para o bloco 'else'
+            # Gera o codigo para o bloco 'else'
             code += self.else_block.Generate(symbol_table)
             # Label final
             code += f"{end_label}:\n"
@@ -226,7 +226,7 @@ class IfNode(Node):
             end_label = f"ENDIF_{self.id}"
             # Se EAX == 0, pula para o fim
             code += f"    JE {end_label}\n"
-            # Gera o código para o bloco 'if'
+            # Gera o codigo para o bloco 'if'
             code += self.if_block.Generate(symbol_table)
             # Label final
             code += f"{end_label}:\n"
@@ -242,17 +242,17 @@ class WhileNode(Node):
         code = ""
         start_label = f"LOOP_{self.id}"
         end_label = f"ENDLOOP_{self.id}"
-        # Label de início do loop
+        # Label de inicio do loop
         code += f"{start_label}:\n"
-        # Gera o código para a condição (resultado em EAX)
+        # Gera o codigo para a condicao (resultado em EAX)
         code += self.condition.Generate(symbol_table)
         # Compara EAX com zero
         code += "    CMP EAX, 0\n"
         # Se EAX == 0, sai do loop
         code += f"    JE {end_label}\n"
-        # Gera o código para o bloco do loop
+        # Gera o codigo para o bloco do loop
         code += self.block.Generate(symbol_table)
-        # Volta ao início do loop
+        # Volta ao inicio do loop
         code += f"    JMP {start_label}\n"
         # Label de fim do loop
         code += f"{end_label}:\n"
@@ -263,5 +263,5 @@ class InputNode(Node):
         self.id = Node.newId()
 
     def Generate(self, symbol_table):
-        # Implementação do scanf não é trivial em assembly e não será suportada aqui
-        raise NotImplementedError("scanf não é suportado nesta implementação")
+        # Implementacao do scanf nao e trivial em assembly e nao sera suportada aqui
+        raise NotImplementedError("scanf nao e suportado nesta implementacao")

@@ -13,14 +13,14 @@ def main():
         
         source = PrePro.filter(source)
 
-        tree = Parser.run(source)  # Executa o parser e retorna a árvore de sintaxe abstrata
+        tree = Parser.run(source)  # Executa o parser e retorna a arvore de sintaxe abstrata
 
-        # Cria a tabela de símbolos
+        # Cria a tabela de simbolos
         symbol_table = SymbolTable()
-        # Gera o código assembly
+        # Gera o codigo assembly
         code = ""
-        # Incluir seções iniciais do assembly (exemplo: constantes, seção .data, etc.)
-        code += "; Código gerado pelo compilador\n"
+        # Incluir secoes iniciais do assembly (exemplo: constantes, secao .data, etc.)
+        code += "; Codigo gerado pelo compilador\n"
         code += "; c o n s t a n t e s\n"
         code += "SYS_EXIT equ 1\n"
         code += "SYS_READ equ 3\n"
@@ -74,22 +74,22 @@ print_exit:
         code += "_start:\n"
         code += "    PUSH EBP\n"
         code += "    MOV EBP, ESP\n"
-        # Gera o código do programa
+        # Gera o codigo do programa
         code += tree.Generate(symbol_table)
-        # Ajuste o ESP para alocar espaço para as variáveis locais
+        # Ajuste o ESP para alocar espaco para as variaveis locais
         if symbol_table.offset != 0:
             code = code.replace("    PUSH EBP\n", f"    PUSH EBP\n    SUB ESP, {-symbol_table.offset}\n")
         # Finaliza o programa
-        code += "    ; Interrupção de saída\n"
+        code += "    ; Interrupcao de saida\n"
         code += "    MOV EAX, SYS_EXIT\n"
         code += "    MOV EBX, 0\n"
         code += "    INT 0x80\n"
 
-        # Escreve o código assembly em um arquivo
+        # Escreve o codigo assembly em um arquivo
         with open('program.asm', 'w') as asm_file:
             asm_file.write(code)
         
-        print("Código assembly gerado com sucesso em 'program.asm'.")
+        print("Codigo assembly gerado com sucesso em 'program.asm'.")
 
     except ValueError as e:
         sys.stderr.write(f"Erro: {e}\n")
