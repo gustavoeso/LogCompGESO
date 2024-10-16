@@ -52,11 +52,11 @@ binop_jg:
 binop_jl:
     JL binop_true
     JMP binop_false
-binop_true:
-    MOV EAX, True
-    JMP binop_exit
 binop_false:
-    MOV EAX, False
+    MOV EBX, False
+    JMP binop_exit
+binop_true:
+    MOV EBX, True
 binop_exit:
     RET
 _start:
@@ -84,10 +84,11 @@ LOOP_32:
     POP EAX
     ADD EAX, EBX
     MOV EBX, EAX
+    MOV EBX, EAX
     POP EAX
     CMP EAX, EBX
     CALL binop_jl
-    CMP EAX, 0
+    CMP EBX, False
     JE EXIT_32
     MOV EAX, [EBP-12]
     PUSH EAX
@@ -96,6 +97,7 @@ LOOP_32:
     POP EAX
     IMUL EBX
     MOV EBX, EAX
+    MOV EBX, EAX
     MOV [EBP-12], EBX ; f = ...
     MOV EAX, [EBP-4]
     PUSH EAX
@@ -103,6 +105,7 @@ LOOP_32:
     MOV EBX, EAX
     POP EAX
     ADD EAX, EBX
+    MOV EBX, EAX
     MOV EBX, EAX
     MOV [EBP-4], EBX ; i = ...
     JMP LOOP_32

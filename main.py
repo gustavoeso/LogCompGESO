@@ -84,11 +84,11 @@ binop_jg:
 binop_jl:
     JL binop_true
     JMP binop_false
-binop_true:
-    MOV EAX, True
-    JMP binop_exit
 binop_false:
-    MOV EAX, False
+    MOV EBX, False
+    JMP binop_exit
+binop_true:
+    MOV EBX, True
 binop_exit:
     RET
 """
