@@ -9,6 +9,7 @@ True equ 1
 False equ 0
 
 section .data
+  newline db 0xA
   ; Aqui poderiam ser definidas constantes e mensagens
 section .bss
   res RESB 1
@@ -65,6 +66,12 @@ print_print:
     INT 0x80
     JMP print_print
 print_end:
+    ; Imprime a quebra de linha
+    MOV EAX, SYS_WRITE
+    MOV EBX, STDOUT
+    MOV ECX, newline
+    MOV EDX, 1
+    INT 0x80
     ; Restaura os registradores
     POP ESI
     POP EDX

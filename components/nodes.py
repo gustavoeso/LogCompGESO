@@ -129,10 +129,7 @@ class IdentifierNode(Node):
     def Generate(self, symbol_table):
         var_info = symbol_table.get(self.name)
         offset = var_info['offset']
-        if offset < 0:
-            code = f"    MOV EAX, [EBP{offset}]\n"
-        else:
-            code = f"    MOV EAX, [EBP+{offset}]\n"
+        code = f"    MOV EAX, [EBP{offset}]\n"
         return code
 
 class AssignmentNode(Node):
@@ -148,10 +145,7 @@ class AssignmentNode(Node):
         # Armazena o valor de EAX na variavel
         var_info = symbol_table.get(self.identifier.name)
         offset = var_info['offset']
-        if offset < 0:
-            code += f"    MOV [EBP{offset}], EAX\n"
-        else:
-            code += f"    MOV [EBP+{offset}], EAX\n"
+        code += f"    MOV [EBP{offset}], EAX\n"
         return code
 
 class VarDec(Node):
@@ -164,15 +158,13 @@ class VarDec(Node):
         code = ""
         for identifier, expression in self.declarations:
             symbol_table.declare(identifier.name, self.var_type)
+            # Não é necessário inicializar as variáveis com 0, pois o espaço já foi reservado
             if expression:
-                # Gera o codigo para avaliar a expressao e armazenar na variavel
+                # Gera o código para avaliar a expressão e armazenar na variável
                 code += expression.Generate(symbol_table)
                 var_info = symbol_table.get(identifier.name)
                 offset = var_info['offset']
-                if offset < 0:
-                    code += f"    MOV [EBP{offset}], EAX\n"
-                else:
-                    code += f"    MOV [EBP+{offset}], EAX\n"
+                code += f"    MOV [EBP{offset}], EAX\n"
         return code
 
 class BlockNode(Node):

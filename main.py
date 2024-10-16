@@ -30,6 +30,7 @@ def main():
         code += "True equ 1\n"
         code += "False equ 0\n\n"
         code += "section .data\n"
+        code += "  newline db 0xA\n"  # Adiciona a nova linha
         code += "  ; Aqui poderiam ser definidas constantes e mensagens\n"
         code += "section .bss\n"
         code += "  res RESB 1\n"
@@ -88,6 +89,12 @@ print_print:
     INT 0x80
     JMP print_print
 print_end:
+    ; Imprime a quebra de linha
+    MOV EAX, SYS_WRITE
+    MOV EBX, STDOUT
+    MOV ECX, newline
+    MOV EDX, 1
+    INT 0x80
     ; Restaura os registradores
     POP ESI
     POP EDX
