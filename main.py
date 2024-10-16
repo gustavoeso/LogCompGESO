@@ -24,7 +24,7 @@ def main():
         symbol_table = SymbolTable()
         # Gera o codigo assembly
         code = ""
-        # Incluir secoes iniciais do assembly (exemplo: constantes, secao .data, etc.)
+        # Incluir secoes iniciais do assembly
         code += "; constantes\n"
         code += "SYS_EXIT equ 1\n"
         code += "SYS_READ equ 3\n"
@@ -33,11 +33,24 @@ def main():
         code += "STDOUT equ 1\n"
         code += "True equ 1\n"
         code += "False equ 0\n"
-        code += "segment .data\n"
-        code += "segment .bss\n"
+        code += "section .data\n"
+        code += "section .bss\n"
         code += "  res RESB 1\n"
         code += "section .text\n"
-        code += "global _start\n"
+        code += "global main\n"
+
+        # Adicione o ponto de entrada 'main'
+        code += "main:\n"
+        code += "    PUSH EBP\n"
+        code += "    MOV EBP, ESP\n"
+        # Gera o codigo do programa
+        code += tree.Generate(symbol_table)
+        # Finaliza a função main
+        code += "    ; retorno da função main\n"
+        code += "    MOV EAX, 0\n"  # Retorno 0 da função main
+        code += "    MOV ESP, EBP\n"
+        code += "    POP EBP\n"
+        code += "    RET\n"
 
         # Sub-rotina print
         code += """
@@ -92,18 +105,6 @@ binop_true:
 binop_exit:
     RET
 """
-
-        # Adicione o ponto de entrada '_start'
-        code += "_start:\n"
-        code += "    PUSH EBP\n"
-        code += "    MOV EBP, ESP\n"
-        # Gera o codigo do programa
-        code += tree.Generate(symbol_table)
-        # Finaliza o programa
-        code += "    ; interrupcao de saida\n"
-        code += "    POP EBP\n"
-        code += "    MOV EAX, SYS_EXIT\n"
-        code += "    INT 0x80\n"
 
         # Gera o nome do arquivo assembly com a extensao '.asm'
         output_file = os.path.splitext(input_file)[0] + '.asm'
