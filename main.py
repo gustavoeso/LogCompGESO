@@ -41,21 +41,43 @@ def main():
 print:
     PUSH EBP
     MOV EBP, ESP
+    ; Salva os registradores que serao usados
+    PUSH EAX
+    PUSH EBX
+    PUSH ECX
+    PUSH EDX
+    PUSH ESI
+    ; Obtem o valor a ser impresso
     MOV EAX, [EBP+8]
     XOR ESI, ESI
-print_dec:
-    MOV EDX, 0
+    CMP EAX, 0
+    JGE print_start
+    ; Se o numero for negativo, imprime o sinal de menos
+    PUSH EAX
+    MOV EAX, '-'
+    PUSH EAX
+    MOV EAX, SYS_WRITE
+    MOV EBX, STDOUT
+    MOV ECX, ESP
+    MOV EDX, 1
+    INT 0x80
+    ADD ESP, 4
+    POP EAX
+    ; Converte para positivo
+    NEG EAX
+print_start:
     MOV EBX, 10
+print_loop:
+    XOR EDX, EDX
     DIV EBX
     ADD EDX, '0'
     PUSH EDX
     INC ESI
     CMP EAX, 0
-    JZ print_next
-    JMP print_dec
-print_next:
+    JNZ print_loop
+print_print:
     CMP ESI, 0
-    JZ print_exit
+    JE print_end
     DEC ESI
     MOV EAX, SYS_WRITE
     MOV EBX, STDOUT
@@ -64,8 +86,14 @@ print_next:
     MOV ECX, res
     MOV EDX, 1
     INT 0x80
-    JMP print_next
-print_exit:
+    JMP print_print
+print_end:
+    ; Restaura os registradores
+    POP ESI
+    POP EDX
+    POP ECX
+    POP EBX
+    POP EAX
     POP EBP
     RET
 """
@@ -74,11 +102,12 @@ print_exit:
         code += "_start:\n"
         code += "    PUSH EBP\n"
         code += "    MOV EBP, ESP\n"
+        # Ajuste o ESP para alocar espaco para as variaveis locais
+        total_stack_space = -symbol_table.offset
+        if total_stack_space > 0:
+            code += f"    SUB ESP, {total_stack_space}\n"
         # Gera o codigo do programa
         code += tree.Generate(symbol_table)
-        # Ajuste o ESP para alocar espaco para as variaveis locais
-        if symbol_table.offset != 0:
-            code = code.replace("    PUSH EBP\n", f"    PUSH EBP\n    SUB ESP, {-symbol_table.offset}\n")
         # Finaliza o programa
         code += "    ; Interrupcao de saida\n"
         code += "    MOV EAX, SYS_EXIT\n"

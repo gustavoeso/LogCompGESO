@@ -129,7 +129,10 @@ class IdentifierNode(Node):
     def Generate(self, symbol_table):
         var_info = symbol_table.get(self.name)
         offset = var_info['offset']
-        code = f"    MOV EAX, [EBP{offset}]\n"
+        if offset < 0:
+            code = f"    MOV EAX, [EBP{offset}]\n"
+        else:
+            code = f"    MOV EAX, [EBP+{offset}]\n"
         return code
 
 class AssignmentNode(Node):
@@ -145,7 +148,10 @@ class AssignmentNode(Node):
         # Armazena o valor de EAX na variavel
         var_info = symbol_table.get(self.identifier.name)
         offset = var_info['offset']
-        code += f"    MOV [EBP{offset}], EAX\n"
+        if offset < 0:
+            code += f"    MOV [EBP{offset}], EAX\n"
+        else:
+            code += f"    MOV [EBP+{offset}], EAX\n"
         return code
 
 class VarDec(Node):
@@ -163,7 +169,10 @@ class VarDec(Node):
                 code += expression.Generate(symbol_table)
                 var_info = symbol_table.get(identifier.name)
                 offset = var_info['offset']
-                code += f"    MOV [EBP{offset}], EAX\n"
+                if offset < 0:
+                    code += f"    MOV [EBP{offset}], EAX\n"
+                else:
+                    code += f"    MOV [EBP+{offset}], EAX\n"
         return code
 
 class BlockNode(Node):
@@ -190,8 +199,8 @@ class PrintNode(Node):
         code += "    PUSH EAX\n"
         # Chama a subrotina de impressao
         code += "    CALL print\n"
-        # Limpa a pilha
-        code += "    POP EAX\n"
+        # Ajusta o ESP após a chamada (limpa o argumento da pilha)
+        code += "    ADD ESP, 4\n"
         return code
 
 class IfNode(Node):

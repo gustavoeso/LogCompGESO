@@ -17,23 +17,44 @@ global _start
 
 print:
     PUSH EBP
-    SUB ESP, 8
     MOV EBP, ESP
+    ; Salva os registradores que serao usados
+    PUSH EAX
+    PUSH EBX
+    PUSH ECX
+    PUSH EDX
+    PUSH ESI
+    ; Obtem o valor a ser impresso
     MOV EAX, [EBP+8]
     XOR ESI, ESI
-print_dec:
-    MOV EDX, 0
+    CMP EAX, 0
+    JGE print_start
+    ; Se o numero for negativo, imprime o sinal de menos
+    PUSH EAX
+    MOV EAX, '-'
+    PUSH EAX
+    MOV EAX, SYS_WRITE
+    MOV EBX, STDOUT
+    MOV ECX, ESP
+    MOV EDX, 1
+    INT 0x80
+    ADD ESP, 4
+    POP EAX
+    ; Converte para positivo
+    NEG EAX
+print_start:
     MOV EBX, 10
+print_loop:
+    XOR EDX, EDX
     DIV EBX
     ADD EDX, '0'
     PUSH EDX
     INC ESI
     CMP EAX, 0
-    JZ print_next
-    JMP print_dec
-print_next:
+    JNZ print_loop
+print_print:
     CMP ESI, 0
-    JZ print_exit
+    JE print_end
     DEC ESI
     MOV EAX, SYS_WRITE
     MOV EBX, STDOUT
@@ -42,53 +63,65 @@ print_next:
     MOV ECX, res
     MOV EDX, 1
     INT 0x80
-    JMP print_next
-print_exit:
+    JMP print_print
+print_end:
+    ; Restaura os registradores
+    POP ESI
+    POP EDX
+    POP ECX
+    POP EBX
+    POP EAX
     POP EBP
     RET
 _start:
     PUSH EBP
-    SUB ESP, 8
     MOV EBP, ESP
     MOV EAX, 5
+    MOV [EBP-8], EAX
+    MOV EAX, 2
     MOV [EBP-4], EAX
     MOV EAX, 1
-    MOV [EBP-8], EAX
-LOOP_25:
+    MOV [EBP-12], EAX
+LOOP_32:
     MOV EAX, [EBP-4]
+    PUSH EAX
+    MOV EAX, [EBP-8]
     PUSH EAX
     MOV EAX, 1
     MOV EBX, EAX
     POP EAX
+    ADD EAX, EBX
+    MOV EBX, EAX
+    POP EAX
     CMP EAX, EBX
-    JG binop_true_13
+    JL binop_true_20
     MOV EAX, 0
-    JMP binop_exit_13
-binop_true_13:
+    JMP binop_exit_20
+binop_true_20:
     MOV EAX, 1
-binop_exit_13:
+binop_exit_20:
     CMP EAX, 0
-    JE ENDLOOP_25
-    MOV EAX, [EBP-8]
+    JE ENDLOOP_32
+    MOV EAX, [EBP-12]
     PUSH EAX
     MOV EAX, [EBP-4]
     MOV EBX, EAX
     POP EAX
     IMUL EAX, EBX
-    MOV [EBP-8], EAX
+    MOV [EBP-12], EAX
     MOV EAX, [EBP-4]
     PUSH EAX
     MOV EAX, 1
     MOV EBX, EAX
     POP EAX
-    SUB EAX, EBX
+    ADD EAX, EBX
     MOV [EBP-4], EAX
-    JMP LOOP_25
-ENDLOOP_25:
-    MOV EAX, [EBP-8]
+    JMP LOOP_32
+ENDLOOP_32:
+    MOV EAX, [EBP-12]
     PUSH EAX
     CALL print
-    POP EAX
+    ADD ESP, 4
     ; Interrupcao de saida
     MOV EAX, SYS_EXIT
     MOV EBX, 0
