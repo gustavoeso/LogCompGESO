@@ -13,14 +13,13 @@ def main():
         
         source = PrePro.filter(source)
 
-        tree = Parser.run(source)  # Executa o parser e retorna a arvore de sintaxe abstrata
+        tree = Parser.run(source)  # Executa o parser e retorna a árvore de sintaxe abstrata
 
-        # Cria a tabela de simbolos
+        # Cria a tabela de símbolos
         symbol_table = SymbolTable()
-        # Gera o codigo assembly
+        # Gera o código assembly
         code = ""
-        # Incluir secoes iniciais do assembly (exemplo: constantes, secao .data, etc.)
-        code += "; Codigo gerado pelo compilador\n"
+        # Incluir seções iniciais do assembly (exemplo: constantes, seção .data, etc.)
         code += "; c o n s t a n t e s\n"
         code += "SYS_EXIT equ 1\n"
         code += "SYS_READ equ 3\n"
@@ -28,57 +27,33 @@ def main():
         code += "STDIN equ 0\n"
         code += "STDOUT equ 1\n"
         code += "True equ 1\n"
-        code += "False equ 0\n\n"
-        code += "section .data\n"
-        code += "  newline db 0xA\n"  # Adiciona a nova linha
-        code += "  ; Aqui poderiam ser definidas constantes e mensagens\n"
-        code += "section .bss\n"
+        code += "False equ 0\n"
+        code += "segment .data\n"
+        code += "segment .bss\n"
         code += "  res RESB 1\n"
         code += "section .text\n"
         code += "global _start\n"
-        # Adicione subrotinas como 'print'
 
+        # Sub-rotina print
         code += """
 print:
     PUSH EBP
     MOV EBP, ESP
-    ; Salva os registradores que serao usados
-    PUSH EAX
-    PUSH EBX
-    PUSH ECX
-    PUSH EDX
-    PUSH ESI
-    ; Obtem o valor a ser impresso
     MOV EAX, [EBP+8]
     XOR ESI, ESI
-    CMP EAX, 0
-    JGE print_start
-    ; Se o numero for negativo, imprime o sinal de menos
-    PUSH EAX
-    MOV EAX, '-'
-    PUSH EAX
-    MOV EAX, SYS_WRITE
-    MOV EBX, STDOUT
-    MOV ECX, ESP
-    MOV EDX, 1
-    INT 0x80
-    ADD ESP, 4
-    POP EAX
-    ; Converte para positivo
-    NEG EAX
-print_start:
-    MOV EBX, 10
-print_loop:
-    XOR EDX, EDX
+print_dec:
+    MOV EDX, 0
+    MOV EBX, 0x000A
     DIV EBX
     ADD EDX, '0'
     PUSH EDX
     INC ESI
     CMP EAX, 0
-    JNZ print_loop
-print_print:
+    JZ print_next
+    JMP print_dec
+print_next:
     CMP ESI, 0
-    JE print_end
+    JZ print_exit
     DEC ESI
     MOV EAX, SYS_WRITE
     MOV EBX, STDOUT
@@ -87,21 +62,23 @@ print_print:
     MOV ECX, res
     MOV EDX, 1
     INT 0x80
-    JMP print_print
-print_end:
-    ; Imprime a quebra de linha
-    MOV EAX, SYS_WRITE
-    MOV EBX, STDOUT
-    MOV ECX, newline
-    MOV EDX, 1
-    INT 0x80
-    ; Restaura os registradores
-    POP ESI
-    POP EDX
-    POP ECX
-    POP EBX
-    POP EAX
+    JMP print_next
+print_exit:
     POP EBP
+    RET
+"""
+
+        # Sub-rotinas binárias
+        code += """
+binop_jl:
+    JL binop_true
+    JMP binop_false
+binop_true:
+    MOV EAX, True
+    JMP binop_exit
+binop_false:
+    MOV EAX, False
+binop_exit:
     RET
 """
 
@@ -109,23 +86,19 @@ print_end:
         code += "_start:\n"
         code += "    PUSH EBP\n"
         code += "    MOV EBP, ESP\n"
-        # Ajuste o ESP para alocar espaco para as variaveis locais
-        total_stack_space = -symbol_table.offset
-        if total_stack_space > 0:
-            code += f"    SUB ESP, {total_stack_space}\n"
-        # Gera o codigo do programa
+        # Gera o código do programa
         code += tree.Generate(symbol_table)
         # Finaliza o programa
-        code += "    ; Interrupcao de saida\n"
+        code += "    ; interrupção de saída\n"
+        code += "    POP EBP\n"
         code += "    MOV EAX, SYS_EXIT\n"
-        code += "    MOV EBX, 0\n"
         code += "    INT 0x80\n"
 
-        # Escreve o codigo assembly em um arquivo
+        # Escreve o código assembly em um arquivo
         with open('program.asm', 'w') as asm_file:
             asm_file.write(code)
         
-        print("Codigo assembly gerado com sucesso em 'program.asm'.")
+        print("Código assembly gerado com sucesso em 'program.asm'.")
 
     except ValueError as e:
         sys.stderr.write(f"Erro: {e}\n")
