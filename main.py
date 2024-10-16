@@ -11,21 +11,21 @@ def main():
         
         input_file = sys.argv[1]
         if not os.path.isfile(input_file):
-            raise ValueError(f"Arquivo '{input_file}' não encontrado.")
+            raise ValueError(f"Arquivo '{input_file}' nao encontrado.")
 
-        with open(input_file, 'r') as file:
+        with open(input_file, 'r', encoding='utf-8') as file:
             source = file.read()
         
         source = PrePro.filter(source)
 
-        tree = Parser.run(source)  # Executa o parser e retorna a árvore de sintaxe abstrata
+        tree = Parser.run(source)  # Executa o parser e retorna a arvore de sintaxe abstrata
 
-        # Cria a tabela de símbolos
+        # Cria a tabela de simbolos
         symbol_table = SymbolTable()
-        # Gera o código assembly
+        # Gera o codigo assembly
         code = ""
-        # Incluir seções iniciais do assembly (exemplo: constantes, seção .data, etc.)
-        code += "; c o n s t a n t e s\n"
+        # Incluir secoes iniciais do assembly (exemplo: constantes, secao .data, etc.)
+        code += "; constantes\n"
         code += "SYS_EXIT equ 1\n"
         code += "SYS_READ equ 3\n"
         code += "SYS_WRITE equ 4\n"
@@ -73,8 +73,14 @@ print_exit:
     RET
 """
 
-        # Sub-rotinas binárias
+        # Sub-rotinas binarias
         code += """
+binop_je:
+    JE binop_true
+    JMP binop_false
+binop_jg:
+    JG binop_true
+    JMP binop_false
 binop_jl:
     JL binop_true
     JMP binop_false
@@ -91,22 +97,22 @@ binop_exit:
         code += "_start:\n"
         code += "    PUSH EBP\n"
         code += "    MOV EBP, ESP\n"
-        # Gera o código do programa
+        # Gera o codigo do programa
         code += tree.Generate(symbol_table)
         # Finaliza o programa
-        code += "    ; interrupção de saída\n"
+        code += "    ; interrupcao de saida\n"
         code += "    POP EBP\n"
         code += "    MOV EAX, SYS_EXIT\n"
         code += "    INT 0x80\n"
 
-        # Gera o nome do arquivo assembly com a extensão '.asm'
+        # Gera o nome do arquivo assembly com a extensao '.asm'
         output_file = os.path.splitext(input_file)[0] + '.asm'
 
-        # Escreve o código assembly em um arquivo
-        with open(output_file, 'w') as asm_file:
+        # Escreve o codigo assembly em um arquivo
+        with open(output_file, 'w', encoding='utf-8') as asm_file:
             asm_file.write(code)
         
-        print(f"Código assembly gerado com sucesso em '{output_file}'.")
+        print(f"Codigo assembly gerado com sucesso em '{output_file}'.")
 
     except ValueError as e:
         sys.stderr.write(f"Erro: {e}\n")
