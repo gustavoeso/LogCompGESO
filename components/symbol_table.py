@@ -1,11 +1,14 @@
 class SymbolTable:
     def __init__(self):
         self.table = {}
-    
+        self.offset = 0  # Deslocamento atual em relação ao EBP
+
     def declare(self, identifier, var_type):
         if identifier in self.table:
             raise ValueError(f"Variável '{identifier}' já declarada.")
-        self.table[identifier] = {'value': None, 'type': var_type}
+        # Cada variável ocupa 4 bytes (DWORD)
+        self.offset -= 4
+        self.table[identifier] = {'type': var_type, 'offset': self.offset}
 
     def get(self, identifier):
         if identifier in self.table:
