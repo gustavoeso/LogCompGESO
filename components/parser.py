@@ -1,7 +1,8 @@
 from components.tokenizer import Tokenizer
 from components.nodes import (
     BinOp, UnOp, IntVal, NoOp, AssignmentNode, BlockNode, PrintNode,
-    IdentifierNode, VarDec, StringVal, IfNode, WhileNode, InputNode
+    IdentifierNode, VarDec, StringVal, IfNode, WhileNode, InputNode,
+    FuncCall, FuncDec, ReturnNode
 )
 
 class Parser:
@@ -18,7 +19,59 @@ class Parser:
 
     @staticmethod
     def parseProgram():
-        return Parser.parseBlock()
+        statements = []
+        while Parser.tokens.next.type != "EOF":
+            if Parser.tokens.next.type == "TYPE":
+                next_token = Parser.tokens.peek()
+                next_next_token = Parser.tokens.peek(2)
+                if next_token.type == "IDENTIFIER" and next_next_token.type == "LPAREN":
+                    # Declaração de função
+                    statements.append(Parser.parseFuncDec())
+                else:
+                    # Declaração de variável
+                    statements.append(Parser.parseVarDec())
+            else:
+                statements.append(Parser.parseStatement())
+        # Adicionar chamada para 'main' como último filho
+        main_call = FuncCall('main', [])
+        statements.append(main_call)
+        return BlockNode(statements)
+
+    @staticmethod
+    def parseFuncDec():
+        func_type = Parser.tokens.next.value
+        if func_type not in ["int", "str", "bool", "void"]:
+            raise ValueError(f"Tipo de função inválido: '{func_type}'")
+        Parser.tokens.selectNext()
+        if Parser.tokens.next.type != "IDENTIFIER":
+            raise ValueError("Esperado o nome da função após o tipo")
+        func_name = Parser.tokens.next.value
+        Parser.tokens.selectNext()
+        if Parser.tokens.next.type != "LPAREN":
+            raise ValueError("Esperado '(' após o nome da função")
+        Parser.tokens.selectNext()
+        params = []
+        if Parser.tokens.next.type != "RPAREN":
+            while True:
+                if Parser.tokens.next.type != "TYPE":
+                    raise ValueError("Esperado um tipo no parâmetro da função")
+                param_type = Parser.tokens.next.value
+                Parser.tokens.selectNext()
+                if Parser.tokens.next.type != "IDENTIFIER":
+                    raise ValueError("Esperado um identificador no parâmetro da função")
+                param_name = Parser.tokens.next.value
+                Parser.tokens.selectNext()
+                params.append((param_type, param_name))
+                if Parser.tokens.next.type == "COMMA":
+                    Parser.tokens.selectNext()
+                    continue
+                elif Parser.tokens.next.type == "RPAREN":
+                    break
+                else:
+                    raise ValueError("Esperado ',' ou ')' na lista de parâmetros")
+        Parser.tokens.selectNext()
+        body = Parser.parseBlock()
+        return FuncDec(func_type, func_name, params, body)
 
     @staticmethod
     def parseBlock():
@@ -28,7 +81,7 @@ class Parser:
         statements = []
         while Parser.tokens.next.type != "RBRACE":
             statements.append(Parser.parseStatement())
-        Parser.tokens.selectNext()
+        Parser.tokens.selectNext()  # Consumir '}'
         return BlockNode(statements)
 
     @staticmethod
@@ -36,7 +89,17 @@ class Parser:
         if Parser.tokens.next.type == "TYPE":
             node = Parser.parseVarDec()
         elif Parser.tokens.next.type == "IDENTIFIER":
-            node = Parser.parseAssignment()
+            # Pode ser uma atribuição ou uma chamada de função
+            next_token = Parser.tokens.peek()
+            if next_token.type == "LPAREN":
+                node = Parser.parseFuncCall()
+                if Parser.tokens.next.type != "SEMICOLON":
+                    raise ValueError("Esperado ';' após a chamada da função")
+                Parser.tokens.selectNext()
+            else:
+                node = Parser.parseAssignment()
+        elif Parser.tokens.next.type == "RETURN":
+            node = Parser.parseReturn()
         elif Parser.tokens.next.type == "IF":
             node = Parser.parseIf()
         elif Parser.tokens.next.type == "WHILE":
@@ -51,6 +114,45 @@ class Parser:
         else:
             raise ValueError(f"Comando inesperado '{Parser.tokens.next.value}'")
         return node
+
+    @staticmethod
+    def parseReturn():
+        Parser.tokens.selectNext()  # Consumir 'return'
+        if Parser.tokens.next.type == "LPAREN":
+            Parser.tokens.selectNext()  # Consumir '('
+            expression = Parser.parseExpression()
+            if Parser.tokens.next.type != "RPAREN":
+                raise ValueError("Esperado ')' após a expressão de retorno")
+            Parser.tokens.selectNext()  # Consumir ')'
+        else:
+            expression = None  # Não há expressão de retorno
+        if Parser.tokens.next.type != "SEMICOLON":
+            raise ValueError("Esperado ';' após 'return'")
+        Parser.tokens.selectNext()  # Consumir ';'
+        return ReturnNode(expression)
+
+
+    @staticmethod
+    def parseFuncCall():
+        func_name = Parser.tokens.next.value
+        Parser.tokens.selectNext()  # Consumir o nome da função
+        if Parser.tokens.next.type != "LPAREN":
+            raise ValueError("Esperado '(' na chamada da função")
+        Parser.tokens.selectNext()  # Consumir '('
+        args = []
+        if Parser.tokens.next.type != "RPAREN":
+            while True:
+                arg = Parser.parseExpression()
+                args.append(arg)
+                if Parser.tokens.next.type == "COMMA":
+                    Parser.tokens.selectNext()
+                    continue
+                elif Parser.tokens.next.type == "RPAREN":
+                    break
+                else:
+                    raise ValueError("Esperado ',' ou ')' na lista de argumentos")
+        Parser.tokens.selectNext()  # Consumir ')'
+        return FuncCall(func_name, args)
 
     @staticmethod
     def parseVarDec():
@@ -223,9 +325,13 @@ class Parser:
             Parser.tokens.selectNext()
             return IntVal(value)
         elif Parser.tokens.next.type == "IDENTIFIER":
-            identifier = IdentifierNode(Parser.tokens.next.value)
+            identifier = Parser.tokens.next.value
             Parser.tokens.selectNext()
-            return identifier
+            if Parser.tokens.next.type == "LPAREN":
+                # É uma chamada de função
+                return Parser.parseFuncCallFromFactor(identifier)
+            else:
+                return IdentifierNode(identifier)
         elif Parser.tokens.next.type == "STRING":
             value = Parser.tokens.next.value
             Parser.tokens.selectNext()
@@ -247,6 +353,25 @@ class Parser:
             return Parser.parseInput()
         else:
             raise ValueError(f"Fator inesperado '{Parser.tokens.next.value}'")
+
+    @staticmethod
+    def parseFuncCallFromFactor(func_name):
+        # Já consumimos o nome da função e sabemos que o próximo token é '('
+        Parser.tokens.selectNext()  # Consumir '('
+        args = []
+        if Parser.tokens.next.type != "RPAREN":
+            while True:
+                arg = Parser.parseExpression()
+                args.append(arg)
+                if Parser.tokens.next.type == "COMMA":
+                    Parser.tokens.selectNext()
+                    continue
+                elif Parser.tokens.next.type == "RPAREN":
+                    break
+                else:
+                    raise ValueError("Esperado ',' ou ')' na lista de argumentos")
+        Parser.tokens.selectNext()  # Consumir ')'
+        return FuncCall(func_name, args)
 
     @staticmethod
     def parseInput():

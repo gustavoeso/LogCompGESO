@@ -1,12 +1,31 @@
 # components/tokenizer.py
 
 from components.my_token import Token
+import copy
 
 class Tokenizer:
     def __init__(self, source: str):
         self.source = source
         self.position = 0
         self.next = None
+
+    def peek(self, n=1):
+        # Salvar o estado atual
+        saved_position = self.position
+        saved_next = self.next
+
+        # Avançar n tokens
+        for _ in range(n):
+            self.selectNext()
+
+        # Salvar o token desejado
+        token = self.next
+
+        # Restaurar o estado
+        self.position = saved_position
+        self.next = saved_next
+
+        return token
 
     def selectNext(self):
         # Ignorar espaços em branco
@@ -36,6 +55,8 @@ class Tokenizer:
                 "int": "TYPE",
                 "str": "TYPE",
                 "bool": "TYPE",
+                "void": "TYPE",  # Adicionado 'void' como 'TYPE'
+                "return": "RETURN",
                 "true": "TRUE",
                 "false": "FALSE"
             }

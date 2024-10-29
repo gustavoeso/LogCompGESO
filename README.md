@@ -10,6 +10,21 @@ Diagrama sintático do compilador:
 
 Representação EBNF do compilador:
 ```ebnf
+PROGRAM = { DECLARATION }, MAIN_CALL ;
+
+DECLARATION = FUNC_DECLARATION
+            | VAR_DECLARATION ";" ;
+
+FUNC_DECLARATION = FUNC_TYPE, IDENTIFIER, "(", [ PARAM_LIST ], ")", BLOCK ;
+
+FUNC_TYPE = TYPE | "void" ;
+
+PARAM_LIST = PARAM, { ",", PARAM } ;
+
+PARAM = TYPE, IDENTIFIER ;
+
+MAIN_CALL = FUNC_CALL ";" ;  (* Chamada implícita da função 'main' *)
+
 BLOCK = "{", { STATEMENT }, "}" ;
 
 STATEMENT = VAR_DECLARATION ";"
@@ -17,6 +32,8 @@ STATEMENT = VAR_DECLARATION ";"
           | PRINT ";"
           | IF
           | WHILE
+          | RETURN_STATEMENT
+          | FUNC_CALL ";"
           | BLOCK
           | ";" ;
 
@@ -30,11 +47,15 @@ VAR_DECLARATOR = IDENTIFIER, [ "=", EXPRESSION ] ;
 
 ASSIGNMENT = IDENTIFIER, "=", EXPRESSION ;
 
+RETURN_STATEMENT = "return", [ "(", EXPRESSION, ")" ], ";" ;
+
 PRINT = "printf", "(", EXPRESSION, ")" ;
 
 IF = "if", "(", EXPRESSION, ")", STATEMENT, [ "else", STATEMENT ] ;
 
 WHILE = "while", "(", EXPRESSION, ")", STATEMENT ;
+
+EXPRESSION = BOOLEAN_EXPRESSION ;
 
 BOOLEAN_EXPRESSION = LOGICAL_OR_EXPRESSION ;
 
@@ -56,8 +77,12 @@ FACTOR = ( ("+" | "-" | "!"), FACTOR )
        | "true"
        | "false"
        | "(", EXPRESSION, ")"
-       | IDENTIFIER
+       | IDENTIFIER, [ "(", [ ARGUMENT_LIST ], ")" ]
        | "scanf", "(", ")" ;
+
+ARGUMENT_LIST = EXPRESSION, { ",", EXPRESSION } ;
+
+FUNC_CALL = IDENTIFIER, "(", [ ARGUMENT_LIST ], ")" ;
 
 IDENTIFIER = LETTER, { LETTER | DIGIT | "_" } ;
 

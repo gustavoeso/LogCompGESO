@@ -8,7 +8,7 @@ def main():
         if len(sys.argv) != 2:
             raise ValueError("Uso: python main.py <arquivo>.c")
         
-        with open(sys.argv[1], 'r') as file:
+        with open(sys.argv[1], 'r', encoding='utf-8') as file:
             source = file.read()
         
         source = PrePro.filter(source)
